@@ -1,10 +1,11 @@
-require("dotenv").config({ path: "../.env" });
+require("dotenv").config();
 const router = require("express").Router();
 const ListenerSchema = require("../Models/Listener");
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
 const PairingSchema = require("../Models/Pairings");
 const SeekerAuth = require("../Middleware/SeekerAuth");
+const ListenerAuth = require("../Middleware/ListenerAuth");
 const auths = { SeekerAuth, ListenerAuth };
 const faker = require("faker");
 
@@ -263,3 +264,5 @@ router.get("/get/single/:sessionid", (req, res) => {
       res.sendStatus(500);
     });
 });
+
+module.exports = router;

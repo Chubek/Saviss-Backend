@@ -1,14 +1,15 @@
-require("dotenv").config({ path: __dirname + "/.env" });
+require("dotenv").config();
+const path = require("path");
 const mongoose = require("mongoose");
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
-const path = require("path");
 const colors = require("colors");
 
 const app = express();
 
 global.appRoot = path.resolve(__dirname);
+global.envPath = path.join(appRoot, ".env");
 
 app.use(cors());
 app.use(express.json());
@@ -35,11 +36,11 @@ mongoose.set("useFindAndModify", false);
 
 app.use("/avatars", express.static(path.join(__dirname, "public/img/avatars")));
 
-app.use("/listener", require("./Routes/listener"));
-app.use("/admin", require("./Routes/admin"));
-app.use("/blocked", require("./Routes/blockedNumbers"));
-app.use("/superAdmin", require("./Routes/superAdmin"));
-app.use("/session", require("./Routes/pairings"));
+app.use("/listener", require("./routes/listener"));
+app.use("/admin", require("./routes/admin"));
+app.use("/blocked", require("./routes/blockedNumbers"));
+app.use("/superAdmin", require("./routes/superAdmin"));
+app.use("/session", require("./routes/pairings"));
 
 /*app.get("/", function(req, res) {
   res.sendFile("index.html", { root: path.join(__dirname, "dist") });

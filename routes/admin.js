@@ -1,11 +1,11 @@
-require("dotenv").config({ path: "../.env" });
-const router = require("./node_modules/express").Router();
-const fieldEncryption = require("./node_modules/mongoose-field-encryption");
+require('dotenv').config()
+const router = require("express").Router();
+const fieldEncryption = require("mongoose-field-encryption");
 const ListenerSchema = require("../Models/Listener");
-const bcrypt = require("./node_modules/bcrypt");
-const jwt = require("./node_modules/jsonwebtoken");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const AdminSchema = require("../Models/Admin");
-const CryptoJS = require("./node_modules/crypto-js");
+const CryptoJS = require("crypto-js");
 const AdminAuth = require("../Middleware/AdminAuth");
 const SuperAdminAuth = require("../Middleware/SuperAdminAuth");
 //GETs
@@ -239,3 +239,5 @@ router.put("/ban/:listenerid", AdminAuth, (req, res) => {
       res.sendStatus(500);
     });
 });
+
+module.exports = router;

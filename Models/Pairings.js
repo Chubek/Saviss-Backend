@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const mongooseFieldEncryption = require("mongoose-field-encryption")
   .fieldEncryption;
 const Schema = mongoose.Schema;

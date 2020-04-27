@@ -1,4 +1,4 @@
-require("dotenv").config({ path: "../.env" });
+require('dotenv').config()
 const router = require("express").Router();
 const ListenerSchema = require("../Models/Listener");
 const jwt = require("jsonwebtoken");
@@ -10,10 +10,10 @@ const AdminSchema = require("../Models/Admin");
 
 router.post("/block", AdminAuth, (req, res) => {
   const adminId = req.admin.id;
-  const { blockedNumber, reportedMessage } = req.body;
+  const { number, reportedMessage } = req.body;
 
   const blockedNumber = new BlockedNumbersSchema({
-    blockedNumber: blockedNumber,
+    blockedNumber: number,
     reportedMessage: reportedMessage,
   });
 
@@ -44,3 +44,5 @@ router.get("/get/single/:blockid", AdminAuth, (req, res) => {
       res.sendStatus(500);
     });
 });
+
+module.exports = router;

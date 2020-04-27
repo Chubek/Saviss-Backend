@@ -1,4 +1,4 @@
-require("dotenv").config({ path: "../.env" });
+require("dotenv").config();
 const router = require("express").Router();
 const fieldEncryption = require("mongoose-field-encryption");
 const ListenerSchema = require("../Models/Listener");
@@ -218,3 +218,5 @@ router.put("/delete/admin", SuperAdminAuth, (req, res) => {
       res.sendStatus(500);
     });
 });
+
+module.exports = router;
