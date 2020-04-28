@@ -1,7 +1,8 @@
-require('dotenv').config()
+require("dotenv").config();
 const mongoose = require("mongoose");
 const mongooseFieldEncryption = require("mongoose-field-encryption")
   .fieldEncryption;
+const cryptoRandomString = require("crypto-random-string");
 const Schema = mongoose.Schema;
 
 const AdminSchema = Schema({
@@ -37,6 +38,7 @@ const AdminSchema = Schema({
 AdminSchema.plugin(mongooseFieldEncryption, {
   fields: ["email", "userName", "phoneNumber"],
   secret: process.env.MONGOOSE_ENCRYPT_SECRET,
+  saltGenerator: cryptoRandomString,
 });
 
 module.exports = mongoose.model("Admin", AdminSchema);

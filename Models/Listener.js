@@ -1,7 +1,8 @@
-require('dotenv').config()
+require("dotenv").config();
 const mongoose = require("mongoose");
 const mongooseFieldEncryption = require("mongoose-field-encryption")
   .fieldEncryption;
+const cryptoRandomString = require("crypto-random-string");
 const Schema = mongoose.Schema;
 
 const ListenrSchema = new Schema({
@@ -83,6 +84,7 @@ const ListenrSchema = new Schema({
 ListenrSchema.plugin(mongooseFieldEncryption, {
   fields: ["email", "number", "otp.password"],
   secret: process.env.MONGOOSE_ENCRYPT_SECRET,
+  saltGenerator: cryptoRandomString,
 });
 
 module.exports = mongoose.model("Listener", ListenrSchema);

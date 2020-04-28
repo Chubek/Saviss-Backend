@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const mongooseFieldEncryption = require("mongoose-field-encryption")
   .fieldEncryption;
+const cryptoRandomString = require("crypto-random-string");
 const Schema = mongoose.Schema;
 
 const PairingSchema = new Schema({
@@ -31,6 +32,7 @@ const PairingSchema = new Schema({
 PairingSchema.plugin(mongooseFieldEncryption, {
   fields: ["seekerNumber"],
   secret: process.env.MONGOOSE_ENCRYPT_SECRET,
+  saltGenerator: cryptoRandomString,
 });
 
 module.exports = mongoose.model("Pairing", PairingSchema);

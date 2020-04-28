@@ -16,6 +16,7 @@ const imageminJpegtran = require("imagemin-jpegtran");
 const imageminPngquant = require("imagemin-pngquant");
 const SendOTP = require("../Services/SendOTP");
 const asyncHandler = require("express-async-handler");
+const cryptoRandomString = require("crypto-random-string");
 //GETs
 router.get("/get/all", (req, res) => {
   ListenerSchema.find({})
@@ -83,19 +84,22 @@ router.post("/register", (req, res) => {
     res.status(401).json({ notSent: "number" });
   }
 
-  const indianRe = / ^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[789]\d{9}$ /;
+  const indianRe = /^(?:(?:\+|0{0,2})91(\s*[\-]\s*)?|[0]?)?[789]\d{9}$/;
 
-  if (!number.match(indianRe)) {
+  if (!indianRe.test(number)) {
     res.status(401).json({ numberNotIndian: true });
+    return false;
   }
 
   const encryptedEmail = fieldEncryption.encrypt(
     email,
-    process.env.MONGOOSE_ENCRYPT_SECRET
+    process.env.MONGOOSE_ENCRYPT_SECRET,
+    cryptoRandomString
   );
   const encryptedNumber = fieldEncryption.encrypt(
     number,
-    process.env.MONGOOSE_ENCRYPT_SECRET
+    process.env.MONGOOSE_ENCRYPT_SECRET,
+    cryptoRandomString
   );
   ListenerSchema.findOne({
     $or: [
@@ -137,7 +141,7 @@ router.post("/register", (req, res) => {
         `Your activation code is: ${emailVerificationCode}. \n Please enter the above code into the specified field in the app.`
       )
         .then(() => {
-          SendOTP(password, number)
+          SendOTP(password, number.substr(1))
             .then(() => {
               res.status(200).json({
                 listenerDoc: savedDoc,
@@ -160,31 +164,21 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/auth", (req, res) => {
-  const { email, userName, number, password } = req.body;
-  if (!email || !userName || !number) {
+  const { number, password } = req.body;
+  if (!number) {
     res.status(401).json({ notSent: "loginString" });
   }
   if (!password) {
     res.status(401).json({ notSent: "password" });
   }
 
-  const emailEncrypted = fieldEncryption.encrypt(
-    email,
-    process.env.MONGOOSE_ENCRYPT_SECRET
-  );
-
   const numberEncrypted = fieldEncryption.encrypt(
     number,
-    process.env.MONGOOSE_ENCRYPT_SECRET
+    process.env.MONGOOSE_ENCRYPT_SECRET,
+    cryptoRandomString
   );
 
-  ListenerSchema.findOne({
-    $or: [
-      { email: emailEncrypted },
-      { userName: userName },
-      { "cell.number": numberEncrypted },
-    ],
-  })
+  ListenerSchema.findOne({ "cell.number": numberEncrypted })
     .then((listenerDoc) => {
       if (!listenerDoc) {
         res.status(404).json({ isUser: false });
@@ -228,10 +222,11 @@ router.post("/auth", (req, res) => {
 
 //PUTs
 
-router.put("/request/otp/:listnerid", (req, res) => {
+router.put("/request/otp", (req, res) => {
+  const { number } = req.body;
   const otp = _.random(100, 999) + _.random(1000, 9999);
   ListenerSchema.findOneAndUpdate(
-    { _id: req.params.listnerid },
+    { "cell.number": numberEncrypted },
     {
       "otp.password": otp,
       "otp.creationHour": new Date()
@@ -240,7 +235,19 @@ router.put("/request/otp/:listnerid", (req, res) => {
         .replace(":", ""),
     }
   )
-    .then(() => res.status(200).json({ otpUpdated: true, newOtp: otp }))
+    .then(() => {
+      SendOTP(password, number.substr(1))
+        .then(() => {
+          res.status(200).json({
+            otpSent: true,
+          });
+        })
+        .catch((e) => {
+          console.error(e);
+          res.sendStatus(500);
+        });
+      res.status(200).json({ otpUpdated: true });
+    })
     .catch((e) => {
       console.error(e);
       res.sendStatus(500);
