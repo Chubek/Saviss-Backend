@@ -1,4 +1,4 @@
-require('dotenv').config()
+require("dotenv").config();
 const router = require("express").Router();
 const ListenerSchema = require("../Models/Listener");
 const jwt = require("jsonwebtoken");

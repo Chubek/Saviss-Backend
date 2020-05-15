@@ -11,6 +11,7 @@ const faker = require("faker");
 
 router.post("/pairup/randomly", (req, res) => {
   const seekerNumber = req.body.seekerNumber;
+  const seekerPk = req.body.seekerPk;
   const seekerNick = faker.internet.userName();
 
   ListenerSchema.find({
@@ -29,6 +30,7 @@ router.post("/pairup/randomly", (req, res) => {
         presentedListeners: { $each: presentedListeners },
         seekerNumber: seekerNumber,
         seekerNick: seekerNick,
+        seekerPk: seekerPk,
       },
     });
 
@@ -49,6 +51,7 @@ router.post("/pairup/randomly", (req, res) => {
 
 router.post("/pairup/category", (req, res) => {
   const seekerNumber = req.body.seekerNumber;
+  const seekerPk = req.body.seekerPk;
   const categories = req.body.categories;
   const seekerNick = faker.internet.userName();
   ListenerSchema.find({
@@ -66,6 +69,7 @@ router.post("/pairup/category", (req, res) => {
       $push: {
         presentedListeners: { $each: presentedListeners },
         seekerNumber: seekerNumber,
+        seekerPk: seekerPk,
         seekerNick: seekerNick,
         $push: { categories: { $each: categories } },
       },
@@ -114,6 +118,8 @@ router.put("/accept/session/:sessionid", ListenerAuth, (req, res) => {
               res.status(200).json({
                 tokens: { listener: listenerToken, seeker: seekerToken },
                 nicks: { seeker: seekerNick, listener: listenerNick },
+                listenerPk: listenerDoc.publicKey,
+                listerId: listenerId,
                 sessionDoc,
               })
             );

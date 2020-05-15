@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Chubek/247buddy#readme",
   "dependencies": {
+    "amqp": "^0.2.7",
     "axios": "^0.19.2",
     "bcrypt": "^4.0.1",
     "colors": "^1.4.0",
@@ -34,10 +35,15 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "mongoose": "^5.9.9",
-    "mongoose-field-encryption": "3.0.4",
+    "mongoose-jumblator": "^1.0.2",
+    "node-redis-pubsub": "^4.0.0",
+    "node-uuid": "^1.4.8",
     "nodemailer": "^6.4.6",
     "randomstring": "^1.1.5",
-    "sha256-file": "^1.0.0"
+    "redis": "^3.0.2",
+    "sha256-file": "^1.0.0",
+    "stream-chat": "^1.8.0",
+    "websocket": "^1.0.31"
   },
   "devDependencies": {
     "nodemon": "^2.0.3"

@@ -17,6 +17,9 @@ const imageminPngquant = require("imagemin-pngquant");
 const SendOTP = require("../Services/SendOTP");
 const asyncHandler = require("express-async-handler");
 const cryptoRandomString = require("crypto-random-string");
+const helpers = require("../Services/Helpers");
+const StreamChat = require("stream-chat").StreamChat;
+
 //GETs
 router.get("/get/all", (req, res) => {
   ListenerSchema.find({})
@@ -67,9 +70,11 @@ router.get("/get/username", ListenerAuth, (req, res) => {
 //POSTs
 
 router.post("/register", (req, res) => {
-  const { userName, email, number, categories } = req.body;
+  const { userName, email, categories } = req.body;
+  let { number } = req.body;
   const password = _.random(100, 999) + _.random(1000, 9999);
   const emailVerificationCode = _.random(100, 999) + _.random(1000, 9999);
+  number = helpers.popNumber(number);
 
   if (!userName) {
     res.status(401).json({ notSent: "userName" });
@@ -101,61 +106,77 @@ router.post("/register", (req, res) => {
     process.env.MONGOOSE_ENCRYPT_SECRET,
     cryptoRandomString
   );
+
   ListenerSchema.findOne({
     $or: [
-      { "cell.number": encryptedNumber },
+      { cell: encryptedNumber },
       { email: encryptedEmail },
       { userName: userName },
     ],
-  }).then((listenerDoc) => {
-    if (listenerDoc.email === encryptedEmail) {
-      res.status(401).json({ isSame: "email" });
-    } else if (listenerDoc.userName === userName) {
-      res.status(401).json({ isSame: "userName" });
-    } else if (
-      listenerDoc.userName === userName &&
-      listenerDoc.email === encryptedEmail &&
-      listenerDoc.cell.number === encryptedNumber
-    ) {
-      res.status(401).json({ isSame: "listener" });
-    } else if (listenerDoc.cell.number === encryptedNumber) {
-      res.status(401).json({ isSame: "number" });
-    }
-  });
-
-  const Listener = new ListenerSchema({
-    userName: userName,
-    email: email,
-    "otp.password": password,
-    "otp.creationHour": new Date().toISOString().substr(11, 5).replace(":", ""),
-    "cell.number": number,
-    $addToSet: { categories: { $each: categories } },
-    emailVerificationCode: emailVerificationCode,
-  });
-
-  Listener.save()
-    .then((savedDoc) => {
-      sendMail(
-        email,
-        "Your Registeration at 247Buddy Requires activation",
-        `Your activation code is: ${emailVerificationCode}. \n Please enter the above code into the specified field in the app.`
-      )
-        .then(() => {
-          SendOTP(password, number.substr(1))
-            .then(() => {
-              res.status(200).json({
-                listenerDoc: savedDoc,
-              });
-            })
-            .catch((e) => {
-              console.error(e);
-              res.sendStatus(500);
-            });
-        })
-        .catch((e) => {
-          console.error(e);
-          res.sendStatus(500);
+  })
+    .then((listenerDoc) => {
+      if (listenerDoc) {
+        console.log("inner");
+        if (listenerDoc.email === encryptedEmail) {
+          res.status(401).json({ isSame: "email" });
+          return false;
+        } else if (listenerDoc.userName === userName) {
+          res.status(401).json({ isSame: "userName" });
+          return false;
+        } else if (
+          listenerDoc.userName === userName &&
+          listenerDoc.email === encryptedEmail &&
+          listenerDoc.cell === encryptedNumber
+        ) {
+          res.status(401).json({ isSame: "listener" });
+          return false;
+        } else if (listenerDoc.cell === encryptedNumber) {
+          res.status(401).json({ isSame: "number" });
+          return false;
+        }
+      } else {
+        const Listener = new ListenerSchema({
+          userName: userName,
+          email: email,
+          "otp.password": password,
+          "otp.creationHour": new Date()
+            .toISOString()
+            .substr(11, 5)
+            .replace(":", ""),
+          cell: number,
+          $addToSet: { categories: { $each: categories } },
+          emailVerificationCode: emailVerificationCode,
         });
+
+        Listener.save()
+          .then((savedDoc) => {
+            sendMail(
+              email,
+              "Your Registeration at 247Buddy Requires activation",
+              `Your activation code is: ${emailVerificationCode}. \n Please enter the above code into the specified field in the app.`
+            )
+              .then(() => {
+                SendOTP(password, number)
+                  .then(() => {
+                    res.status(200).json({
+                      listenerDoc: savedDoc,
+                    });
+                  })
+                  .catch((e) => {
+                    console.error(e);
+                    res.sendStatus(500);
+                  });
+              })
+              .catch((e) => {
+                console.error(e);
+                res.sendStatus(500);
+              });
+          })
+          .catch((e) => {
+            console.error(e);
+            res.sendStatus(500);
+          });
+      }
     })
     .catch((e) => {
       console.error(e);
@@ -164,7 +185,10 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/auth", (req, res) => {
-  const { number, password } = req.body;
+  const client = new StreamChat("", process.env.GETSTREAM_API_KEY);
+  const { password } = req.body;
+  let { number } = req.body;
+  number = helpers.popNumber(number);
   if (!number) {
     res.status(401).json({ notSent: "loginString" });
   }
@@ -178,7 +202,7 @@ router.post("/auth", (req, res) => {
     cryptoRandomString
   );
 
-  ListenerSchema.findOne({ "cell.number": numberEncrypted })
+  ListenerSchema.findOne({ cell: numberEncrypted })
     .then((listenerDoc) => {
       if (!listenerDoc) {
         res.status(404).json({ isUser: false });
@@ -196,13 +220,18 @@ router.post("/auth", (req, res) => {
           process.env.JWT_SECRET,
           (err, token) => {
             if (err) throw err;
-            if (listenerDoc.cell.activated == false) {
+            if (listenerDoc.cellActivated == false) {
               listenerDoc
                 .findOneAndUpdate(
                   { _id: listenerDoc._id },
-                  { "cell.activated": true }
+                  { cellActivated: true }
                 )
-                .then(() => res.status(200).json({ token: token, listenerDoc }))
+                .then(() => {
+                  const chatToken = client.createToken(listenerDoc.userName);
+                  res
+                    .status(200)
+                    .json({ token: token, chatToken: chatToken, listenerDoc });
+                })
                 .catch((e) => {
                   console.error(e);
                   res.sendStatus(500);
@@ -223,10 +252,12 @@ router.post("/auth", (req, res) => {
 //PUTs
 
 router.put("/request/otp", (req, res) => {
-  const { number } = req.body;
+  let { number } = req.body;
+  number = helpers.popNumber(number);
+
   const otp = _.random(100, 999) + _.random(1000, 9999);
   ListenerSchema.findOneAndUpdate(
-    { "cell.number": numberEncrypted },
+    { cell: numberEncrypted },
     {
       "otp.password": otp,
       "otp.creationHour": new Date()
@@ -236,17 +267,14 @@ router.put("/request/otp", (req, res) => {
     }
   )
     .then(() => {
-      SendOTP(password, number.substr(1))
+      SendOTP(password, number)
         .then(() => {
-          res.status(200).json({
-            otpSent: true,
-          });
+          res.status(200).json({ otpUpdated: true, otpSent: true });
         })
         .catch((e) => {
           console.error(e);
           res.sendStatus(500);
         });
-      res.status(200).json({ otpUpdated: true });
     })
     .catch((e) => {
       console.error(e);
@@ -410,5 +438,6 @@ router.put("/set/categories", ListenerAuth, (req, res) => {
       res.sendStatus(500);
     });
 });
+
 
 module.exports = router;

@@ -23,13 +23,13 @@ const ListenrSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  cell: {
-    number: String,
-    activated: {
-      type: Boolean,
-      default: true,
-    },
+  cell: String,
+
+  cellActivated: {
+    type: Boolean,
+    default: true,
   },
+
   otp: {
     password: String,
     creationHour: String,
@@ -79,10 +79,15 @@ const ListenrSchema = new Schema({
     currentEngagedSessionId: String, //if disengaged, will be "None"
     online: Boolean,
   },
+  publicKey: {
+    type: String,
+    encrypt: true,
+    searchable: true,
+  },
 });
 
 ListenrSchema.plugin(mongooseFieldEncryption, {
-  fields: ["email", "number", "otp.password"],
+  fields: ["email", "cell"],
   secret: process.env.MONGOOSE_ENCRYPT_SECRET,
   saltGenerator: cryptoRandomString,
 });

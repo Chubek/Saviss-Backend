@@ -27,6 +27,11 @@ const PairingSchema = new Schema({
     reportedEntity: String,
     reportedMessage: String,
   },
+  seekerPk: {
+    type: String,
+    encrypt: true,
+    searchable: true,
+  },
 });
 
 PairingSchema.plugin(mongooseFieldEncryption, {
