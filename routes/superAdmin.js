@@ -1,6 +1,5 @@
 require("dotenv").config();
 const router = require("express").Router();
-const fieldEncryption = require("mongoose-field-encryption");
 const ListenerSchema = require("../Models/Listener");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -11,7 +10,7 @@ const SuperAdminAuth = require("../Middleware/SuperAdminAuth");
 //POSTs
 
 router.post("/create", (req, res) => {
-  const { isDefault, userName, email, password } = req.body;
+  const { userName, email, password } = req.body;
 
   SuperAdminSchema.find({}).then((superDocs) => {
     if (superDocs.length > 0) {
@@ -20,8 +19,14 @@ router.post("/create", (req, res) => {
     }
   });
 
-  if (isDefault) {
-    const superAdmin = new SuperAdminSchema({});
+  bcrypt.hash(password, 12, (err, hash) => {
+    if (err) throw err;
+
+    const superAdmin = new SuperAdminSchema({
+      userName: userName,
+      email: email,
+      password: hash,
+    });
 
     superAdmin
       .save()
@@ -30,48 +35,16 @@ router.post("/create", (req, res) => {
         console.error(e);
         res.sendStatus(500);
       });
-  } else if (!isDefault) {
-    const userNameEnc = CryptoJS.AES.encrypt(userName, process.env.AES_KEY);
-    const emailEnc = CryptoJS.AES.encrypt(email, process.env.AES_KEY);
-
-    bcrypt.hash(password, 12, (err, hash) => {
-      if (err) throw err;
-
-      const superAdmin = new SuperAdminSchema({
-        userName: userNameEnc,
-        email: emailEnc,
-        password: hash,
-      });
-
-      superAdmin
-        .save()
-        .then(() => res.status(200).json({ superAdminCreated: true }))
-        .catch((e) => {
-          console.error(e);
-          res.sendStatus(500);
-        });
-    });
-  }
+  });
 });
 
 router.post("/auth", (req, res) => {
   const { userName, email, password } = req.body;
 
-  const userNameEnc = fieldEncryption.encrypt(
-    CryptoJS.AES.encrypt(userName, process.env.AES_KEY),
-    process.env.MONGOOSE_ENCRYPT_SECRET
-  );
-  const emailEnc = fieldEncryption.encrypt(
-    CryptoJS.AES.encrypt(email, process.env.AES_KEY),
-    process.env.MONGOOSE_ENCRYPT_SECRET
-  );
-  const passwordEnc = fieldEncryption.encrypt(
-    CryptoJS.AES.encrypt(password, process.env.AES_KEY),
-    process.env.MONGOOSE_ENCRYPT_SECRET
-  );
+  
 
   SuperAdminSchema.findOne({
-    $or: [{ userName: userNameEnc }, { email: emailEnc }],
+    $or: [{ userName: userName }, { email: email }],
   }).then((superDoc) => {
     bcrypt.compare(password, superDoc.password, (err, isMatch) => {
       if (err) throw err;
@@ -79,14 +52,7 @@ router.post("/auth", (req, res) => {
       if (isMatch) {
         jwt.sign({ id: superDoc._id }, process.env.JWT_SECRET, (err, token) => {
           if (err) throw err;
-          superDoc.userName = CryptoJS.AES.decrypt(
-            superDoc.userName,
-            process.env.AES_KEY
-          );
-          superDoc.email = CryptoJS.AES.decrypt(
-            superDoc.email,
-            process.env.AES_KEY
-          );
+          
 
           res.status(200).json({ token: token, superDoc });
         });
@@ -99,16 +65,14 @@ router.put("/edit/info", SuperAdminAuth, (req, res) => {
   const superId = req.super.id;
   const { userName, email } = req.body;
 
-  const userNameEnc = CryptoJS.AES.encrypt(userName, process.env.AES_KEY);
-  const emailEnc = CryptoJS.AES.encrypt(email, process.env.AES_KEY);
-
+  
   SuperAdminSchema.findOneAndUpdate(
     { _id: superId },
-    { userName: userNameEnc, email: emailEnc }
+    { userName: userName, email: email }
   )
     .then(() => res.status(200).json({ superUpdated: true }))
     .catch((e) => {
-      console.error(e);
+      console.error(e); 
       res.sendStatus(500);
     });
 });

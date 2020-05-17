@@ -1,6 +1,5 @@
 require("dotenv").config();
 const router = require("express").Router();
-const fieldEncryption = require("mongoose-field-encryption");
 const ListenerSchema = require("../Models/Listener");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -18,7 +17,7 @@ const SendOTP = require("../Services/SendOTP");
 const asyncHandler = require("express-async-handler");
 const cryptoRandomString = require("crypto-random-string");
 const helpers = require("../Services/Helpers");
-const StreamChat = require("stream-chat").StreamChat;
+const DecryptMW = require("../Middleware/DecryptMW");
 
 //GETs
 router.get("/get/all", (req, res) => {
@@ -72,7 +71,11 @@ router.get("/get/username", ListenerAuth, (req, res) => {
 router.post("/register", (req, res) => {
   const { userName, email, categories } = req.body;
   let { number } = req.body;
-  const password = _.random(100, 999) + _.random(1000, 9999);
+  const isTest = req.body.test === "true" ? true : false;
+  let password = _.random(100, 999) + _.random(1000, 9999);
+  if (isTest) {
+    password = "0000";
+  }
   const emailVerificationCode = _.random(100, 999) + _.random(1000, 9999);
   number = helpers.popNumber(number);
 
@@ -96,28 +99,10 @@ router.post("/register", (req, res) => {
     return false;
   }
 
-  const encryptedEmail = fieldEncryption.encrypt(
-    email,
-    process.env.MONGOOSE_ENCRYPT_SECRET,
-    cryptoRandomString
-  );
-  const encryptedNumber = fieldEncryption.encrypt(
-    number,
-    process.env.MONGOOSE_ENCRYPT_SECRET,
-    cryptoRandomString
-  );
-
-  ListenerSchema.findOne({
-    $or: [
-      { cell: encryptedNumber },
-      { email: encryptedEmail },
-      { userName: userName },
-    ],
-  })
+  ListenerSchema.findOne({ cell: number })
     .then((listenerDoc) => {
       if (listenerDoc) {
-        console.log("inner");
-        if (listenerDoc.email === encryptedEmail) {
+        if (listenerDoc.email === email) {
           res.status(401).json({ isSame: "email" });
           return false;
         } else if (listenerDoc.userName === userName) {
@@ -125,12 +110,12 @@ router.post("/register", (req, res) => {
           return false;
         } else if (
           listenerDoc.userName === userName &&
-          listenerDoc.email === encryptedEmail &&
-          listenerDoc.cell === encryptedNumber
+          listenerDoc.email === email &&
+          listenerDoc.cell === number
         ) {
           res.status(401).json({ isSame: "listener" });
           return false;
-        } else if (listenerDoc.cell === encryptedNumber) {
+        } else if (listenerDoc.cell === number) {
           res.status(401).json({ isSame: "number" });
           return false;
         }
@@ -185,7 +170,6 @@ router.post("/register", (req, res) => {
 });
 
 router.post("/auth", (req, res) => {
-  const client = new StreamChat("", process.env.GETSTREAM_API_KEY);
   const { password } = req.body;
   let { number } = req.body;
   number = helpers.popNumber(number);
@@ -196,13 +180,7 @@ router.post("/auth", (req, res) => {
     res.status(401).json({ notSent: "password" });
   }
 
-  const numberEncrypted = fieldEncryption.encrypt(
-    number,
-    process.env.MONGOOSE_ENCRYPT_SECRET,
-    cryptoRandomString
-  );
-
-  ListenerSchema.findOne({ cell: numberEncrypted })
+  ListenerSchema.findOne({ cell: number })
     .then((listenerDoc) => {
       if (!listenerDoc) {
         res.status(404).json({ isUser: false });
@@ -227,10 +205,7 @@ router.post("/auth", (req, res) => {
                   { cellActivated: true }
                 )
                 .then(() => {
-                  const chatToken = client.createToken(listenerDoc.userName);
-                  res
-                    .status(200)
-                    .json({ token: token, chatToken: chatToken, listenerDoc });
+                  res.status(200).json({ token: token, listenerDoc });
                 })
                 .catch((e) => {
                   console.error(e);
@@ -254,10 +229,14 @@ router.post("/auth", (req, res) => {
 router.put("/request/otp", (req, res) => {
   let { number } = req.body;
   number = helpers.popNumber(number);
+  const isTest = req.body.test === "true" ? true : false;
 
-  const otp = _.random(100, 999) + _.random(1000, 9999);
+  let otp = _.random(100, 999) + _.random(1000, 9999);
+  if (isTest) {
+    otp = "0000";
+  }
   ListenerSchema.findOneAndUpdate(
-    { cell: numberEncrypted },
+    { cell: number },
     {
       "otp.password": otp,
       "otp.creationHour": new Date()
@@ -267,7 +246,7 @@ router.put("/request/otp", (req, res) => {
     }
   )
     .then(() => {
-      SendOTP(password, number)
+      SendOTP(otp, number)
         .then(() => {
           res.status(200).json({ otpUpdated: true, otpSent: true });
         })
@@ -439,5 +418,18 @@ router.put("/set/categories", ListenerAuth, (req, res) => {
     });
 });
 
+router.put("/set/pk", [ListenerAuth, DecryptMW], (req, res) => {
+  const userId = req.user.id;
+  const pk = req.pk;
+
+  ListenerSchema.findOneAndUpdate({ _id: userId }, { publicKey: pk })
+    .then(() => {
+      res.status(200).json({ pkSet: true });
+    })
+    .catch((e) => {
+      console.error(e);
+      res.sendStatus(500);
+    });
+});
 
 module.exports = router;

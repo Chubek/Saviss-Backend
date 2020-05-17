@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "server": "nodemon index.js",
-    "test": "node __test__.js"
+    "test": "mocha --timeout 50000 || true"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,8 @@
     "amqp": "^0.2.7",
     "axios": "^0.19.2",
     "bcrypt": "^4.0.1",
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
     "colors": "^1.4.0",
     "cors": "^2.8.5",
     "crypto-js": "^4.0.0",
@@ -34,8 +36,9 @@
     "imagemin-pngquant": "^8.0.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
+    "mocha": "^7.1.2",
     "mongoose": "^5.9.9",
-    "mongoose-jumblator": "^1.0.2",
+    "mongoose-jumblator": "^1.2.2",
     "node-redis-pubsub": "^4.0.0",
     "node-uuid": "^1.4.8",
     "nodemailer": "^6.4.6",

@@ -1,9 +1,7 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const mongooseFieldEncryption = require("mongoose-field-encryption")
-  .fieldEncryption;
+const jumblator = require("mongoose-jumblator").fieldEncryptionPlugin;
 const Schema = mongoose.Schema;
-const cryptoRandomString = require("crypto-random-string");
 
 const SuperAdminSchema = Schema({
   userName: String,
@@ -16,10 +14,8 @@ const SuperAdminSchema = Schema({
   adminIdsCreatedBy: { type: [String] },
 });
 
-SuperAdminSchema.plugin(mongooseFieldEncryption, {
-  fields: ["email", "userName"],
-  secret: process.env.MONGOOSE_ENCRYPT_SECRET,
-  saltGenerator: cryptoRandomString,
+SuperAdminSchema.plugin(jumblator, {
+  secret: "CHANGE_IN_PRODUCTION",
 });
 
 module.exports = mongoose.model("SuperAdmin", SuperAdminSchema);

@@ -1,8 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const mongooseFieldEncryption = require("mongoose-field-encryption")
-  .fieldEncryption;
-const cryptoRandomString = require("crypto-random-string");
+const jumblator = require("mongoose-jumblator").fieldEncryptionPlugin;
 const Schema = mongoose.Schema;
 
 const AdminSchema = Schema({
@@ -13,6 +11,8 @@ const AdminSchema = Schema({
   email: {
     type: String,
     unique: true,
+    encryption: true,
+    searchable: true,
   },
   dateCreated: {
     type: Date,
@@ -21,6 +21,8 @@ const AdminSchema = Schema({
   phoneNumber: {
     type: String,
     unique: true,
+    encryption: true,
+    searchable: true,
   },
   password: {
     type: String,
@@ -35,10 +37,8 @@ const AdminSchema = Schema({
   },
 });
 
-AdminSchema.plugin(mongooseFieldEncryption, {
-  fields: ["email", "userName", "phoneNumber"],
-  secret: process.env.MONGOOSE_ENCRYPT_SECRET,
-  saltGenerator: cryptoRandomString,
+AdminSchema.plugin(jumblator, {
+  secret: "CHANGEINPRODUCTION", //set to dotenv in production
 });
 
 module.exports = mongoose.model("Admin", AdminSchema);

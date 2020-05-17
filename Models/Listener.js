@@ -1,8 +1,6 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
-const mongooseFieldEncryption = require("mongoose-field-encryption")
-  .fieldEncryption;
-const cryptoRandomString = require("crypto-random-string");
+const jumblator = require("mongoose-jumblator").fieldEncryptionPlugin;
 const Schema = mongoose.Schema;
 
 const ListenrSchema = new Schema({
@@ -17,13 +15,19 @@ const ListenrSchema = new Schema({
   email: {
     type: String,
     unique: true,
+    encrypt: true,
+    searchable: true,
   },
   emailVerificationCode: Number,
   emailVerified: {
     type: Boolean,
     default: false,
   },
-  cell: String,
+  cell: {
+    type: String,
+    encrypt: true,
+    searchable: true,
+  },
 
   cellActivated: {
     type: Boolean,
@@ -31,7 +35,11 @@ const ListenrSchema = new Schema({
   },
 
   otp: {
-    password: String,
+    password: {
+      type: String,
+      encrypt: true,
+      searchable: true,
+    },
     creationHour: String,
     used: {
       type: Boolean,
@@ -86,10 +94,8 @@ const ListenrSchema = new Schema({
   },
 });
 
-ListenrSchema.plugin(mongooseFieldEncryption, {
-  fields: ["email", "cell"],
-  secret: process.env.MONGOOSE_ENCRYPT_SECRET,
-  saltGenerator: cryptoRandomString,
+ListenrSchema.plugin(jumblator, {
+  secret: "CHANGEDURINGPRODUCTION", //NOTE: change to process.env during production
 });
 
 module.exports = mongoose.model("Listener", ListenrSchema);

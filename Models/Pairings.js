@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
-const mongooseFieldEncryption = require("mongoose-field-encryption")
-  .fieldEncryption;
-const cryptoRandomString = require("crypto-random-string");
+const jumblator = require("mongoose-jumblator").fieldEncryptionPlugin;
 const Schema = mongoose.Schema;
 
 const PairingSchema = new Schema({
@@ -11,7 +9,11 @@ const PairingSchema = new Schema({
   },
   presentedListeners: [String],
   listenerId: String,
-  seekerNumber: String,
+  seekerNumber: {
+    type: String,
+    encrypt: true,
+    searchable: true,
+  },
   listenerNick: String,
   seekerNick: String,
   categories: [String],
@@ -34,10 +36,8 @@ const PairingSchema = new Schema({
   },
 });
 
-PairingSchema.plugin(mongooseFieldEncryption, {
-  fields: ["seekerNumber"],
-  secret: process.env.MONGOOSE_ENCRYPT_SECRET,
-  saltGenerator: cryptoRandomString,
+PairingSchema.plugin(jumblator, {
+  secret: "CHANGE_IN_PRODUCTION", //change to env var in production
 });
 
 module.exports = mongoose.model("Pairing", PairingSchema);

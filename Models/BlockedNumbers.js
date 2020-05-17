@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const mongooseFieldEncryption = require("mongoose-field-encryption")
-  .fieldEncryption;
+const jumblator = require("mongoose-jumblator").fieldEncryptionPlugin;
 const cryptoRandomString = require("crypto-random-string");
 const BlockedNumbersSchema = Schema({
   blockedNumber: {
     type: String,
     unique: true,
+    encrypt: true,
+    searchable: true,
   },
   dateBlocked: {
     type: Date,
@@ -15,10 +16,8 @@ const BlockedNumbersSchema = Schema({
   reportedMessage: String,
 });
 
-BlockedNumbersSchema.plugin(mongooseFieldEncryption, {
-  fields: ["blockedNumber"],
-  secret: process.env.MONGOOSE_ENCRYPT_SECRET,
-  saltGenerator: cryptoRandomString,
+BlockedNumbersSchema.plugin(jumblator, {
+  secret: "CHANGE_IN_PRODUCTION", //set to env var in production
 });
 
 module.exports = mongoose.model("BlockedNumber", BlockedNumbersSchema);

@@ -51,3 +51,5 @@ const port = process.env.PORT || 5000;
 app.listen(port, () =>
   console.error(`Server started on port ${port}`.blue.inverse)
 );
+
+module.exports = app;

@@ -8,6 +8,7 @@ const SeekerAuth = require("../Middleware/SeekerAuth");
 const ListenerAuth = require("../Middleware/ListenerAuth");
 const auths = { SeekerAuth, ListenerAuth };
 const faker = require("faker");
+const DecryptMW = require("../Middleware/DecryptMW");
 
 router.post("/pairup/randomly", (req, res) => {
   const seekerNumber = req.body.seekerNumber;
@@ -265,6 +266,20 @@ router.get("/get/all", (req, res) => {
 router.get("/get/single/:sessionid", (req, res) => {
   PairingSchema.findOne({ _id: req.params.sessionid })
     .then((sessionDoc) => res.status(200).json({ sessionDoc }))
+    .catch((e) => {
+      console.error(e);
+      res.sendStatus(500);
+    });
+});
+
+router.put("/set/seeker/pk/:sessionId", DecryptMW, (req, res) => {
+  const sessionId = req.params.sessionId;
+  const pk = req.pk;
+
+  PairingSchema.findOneAndUpdate({ _id: sessionId }, { seekerPk: pk })
+    .then(() => {
+      res.status(200).json({ pkSet: true });
+    })
     .catch((e) => {
       console.error(e);
       res.sendStatus(500);
