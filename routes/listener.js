@@ -23,6 +23,10 @@ const DecryptMW = require("../Middleware/DecryptMW");
 router.get("/get/all", (req, res) => {
   ListenerSchema.find({})
     .then((listenerDocs) => {
+      if (listenerDocs.length < 1) {
+        res.status(404).json({ noListenerFound: true });
+        return false;
+      }
       res.status(200).json({ listenerDocs });
     })
     .catch((e) => {
@@ -36,7 +40,7 @@ router.get("/get/single/:listenerid", (req, res) => {
   ListenerSchema.findOne({ _id: listenerId })
     .then((listenerDoc) => {
       if (!listenerDoc) {
-        res.status(200).json({ noListenerDoc: true });
+        res.status(404).json({ noListenerDoc: true });
         return false;
       }
       res.status(200).json({
@@ -55,7 +59,7 @@ router.get("/get/username", ListenerAuth, (req, res) => {
   ListenerSchema.findOne({ _id: listenerId })
     .then((listenerDoc) => {
       if (!listenerDoc) {
-        res.status(200).json({ noListenerDoc: true });
+        res.status(404).json({ noListenerDoc: true });
         return false;
       }
       res.status(200).json({ userName: listenerDoc.userName });
@@ -68,7 +72,7 @@ router.get("/get/username", ListenerAuth, (req, res) => {
 
 //POSTs
 
-router.post("/register", (req, res) => {
+router.post("/register", async (req, res) => {
   const { userName, email, categories } = req.body;
   let { number } = req.body;
   const isTest = req.body.test === "true" ? true : false;
@@ -99,74 +103,39 @@ router.post("/register", (req, res) => {
     return false;
   }
 
-  ListenerSchema.findOne({ cell: number })
-    .then((listenerDoc) => {
-      if (listenerDoc) {
-        if (listenerDoc.email === email) {
-          res.status(401).json({ isSame: "email" });
-          return false;
-        } else if (listenerDoc.userName === userName) {
-          res.status(401).json({ isSame: "userName" });
-          return false;
-        } else if (
-          listenerDoc.userName === userName &&
-          listenerDoc.email === email &&
-          listenerDoc.cell === number
-        ) {
-          res.status(401).json({ isSame: "listener" });
-          return false;
-        } else if (listenerDoc.cell === number) {
-          res.status(401).json({ isSame: "number" });
-          return false;
-        }
-      } else {
-        const Listener = new ListenerSchema({
-          userName: userName,
-          email: email,
-          "otp.password": password,
-          "otp.creationHour": new Date()
-            .toISOString()
-            .substr(11, 5)
-            .replace(":", ""),
-          cell: number,
-          $addToSet: { categories: { $each: categories } },
-          emailVerificationCode: emailVerificationCode,
-        });
+  let listenerDoc = await ListenerSchema.findOne({ userName: userName });
+  if (listenerDoc) {
+    res.status(401).json({ isSame: "userName" });
+    return false;
+  }
 
-        Listener.save()
-          .then((savedDoc) => {
-            sendMail(
-              email,
-              "Your Registeration at 247Buddy Requires activation",
-              `Your activation code is: ${emailVerificationCode}. \n Please enter the above code into the specified field in the app.`
-            )
-              .then(() => {
-                SendOTP(password, number)
-                  .then(() => {
-                    res.status(200).json({
-                      listenerDoc: savedDoc,
-                    });
-                  })
-                  .catch((e) => {
-                    console.error(e);
-                    res.sendStatus(500);
-                  });
-              })
-              .catch((e) => {
-                console.error(e);
-                res.sendStatus(500);
-              });
-          })
-          .catch((e) => {
-            console.error(e);
-            res.sendStatus(500);
-          });
-      }
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
+  listenerDoc = await ListenerSchema.findOne({ email: email });
+  if (listenerDoc) {
+    res.status(401).json({ isSame: "email" });
+    return false;
+  }
+
+  listenerDoc = await ListenerSchema.findOne({ cell: number });
+  if (listenerDoc) {
+    res.status(401).json({ isSame: "number" });
+    return false;
+  }
+
+  const Listener = new ListenerSchema({
+    userName: userName,
+    email: email,
+    "otp.password": password,
+    "otp.creationHour": new Date().toISOString().substr(11, 5).replace(":", ""),
+    cell: number,
+    $addToSet: { categories: { $each: categories } },
+    emailVerificationCode: emailVerificationCode,
+  });
+
+  const savedDoc = await Listener.save();
+
+  res.status(200).json({
+    listenerDoc: savedDoc,
+  });
 });
 
 router.post("/auth", (req, res) => {
@@ -246,14 +215,7 @@ router.put("/request/otp", (req, res) => {
     }
   )
     .then(() => {
-      SendOTP(otp, number)
-        .then(() => {
-          res.status(200).json({ otpUpdated: true, otpSent: true });
-        })
-        .catch((e) => {
-          console.error(e);
-          res.sendStatus(500);
-        });
+      res.status(200).json({ otpUpdated: true, otpSent: true });
     })
     .catch((e) => {
       console.error(e);
@@ -288,7 +250,7 @@ router.put("/verify/email", ListenerAuth, (req, res) => {
 
 router.put("/set/status", ListenerAuth, (req, res) => {
   const listenerId = req.listener.id;
-  const status = req.body.status;
+  const status = req.body.status === "true" ? true : false;
 
   ListenerSchema.findOneAndUpdate(
     { _id: listenerId },
@@ -411,20 +373,6 @@ router.put("/set/categories", ListenerAuth, (req, res) => {
   )
     .then(() => {
       res.status(200).json({ categoriesSet: true });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
-});
-
-router.put("/set/pk", [ListenerAuth, DecryptMW], (req, res) => {
-  const userId = req.user.id;
-  const pk = req.pk;
-
-  ListenerSchema.findOneAndUpdate({ _id: userId }, { publicKey: pk })
-    .then(() => {
-      res.status(200).json({ pkSet: true });
     })
     .catch((e) => {
       console.error(e);

@@ -6,7 +6,6 @@ const Schema = mongoose.Schema;
 const ListenrSchema = new Schema({
   userName: {
     type: String,
-    unique: true,
   },
   dateRegistered: {
     type: Date,
@@ -14,7 +13,6 @@ const ListenrSchema = new Schema({
   },
   email: {
     type: String,
-    unique: true,
     encrypt: true,
     searchable: true,
   },
@@ -84,7 +82,10 @@ const ListenrSchema = new Schema({
   },
   sessionIds: [String],
   status: {
-    currentEngagedSessionId: String, //if disengaged, will be "None"
+    currentEngagedSessionId: {
+      type: String,
+      default: "None",
+    }, //if disengaged, will be "None"
     online: Boolean,
   },
   publicKey: {

@@ -9,17 +9,22 @@ const ListenerAuth = require("../Middleware/ListenerAuth");
 const auths = { SeekerAuth, ListenerAuth };
 const faker = require("faker");
 const DecryptMW = require("../Middleware/DecryptMW");
+const helpers = require("../Services/Helpers");
 
 router.post("/pairup/randomly", (req, res) => {
-  const seekerNumber = req.body.seekerNumber;
-  const seekerPk = req.body.seekerPk;
+  const seekerNumber = helpers.popNumber(req.body.seekerNumber);
   const seekerNick = faker.internet.userName();
 
   ListenerSchema.find({
+    "approvalStatus.approved": true,
     "status.online": true,
     "status.currentEngagedSessionId": "None",
-    categories: { $in: ["General"] },
   }).then((listenerDocs) => {
+    if (listenerDocs.length == 0) {
+      res.status(404).json({ noListenerFound: true });
+      return false;
+    }
+
     listenerDocs = _.shuffle(listenerDocs);
     const presentedListeners = [];
     listenerDocs.forEach((selectedListener) => {
@@ -31,7 +36,6 @@ router.post("/pairup/randomly", (req, res) => {
         presentedListeners: { $each: presentedListeners },
         seekerNumber: seekerNumber,
         seekerNick: seekerNick,
-        seekerPk: seekerPk,
       },
     });
 
@@ -51,15 +55,21 @@ router.post("/pairup/randomly", (req, res) => {
 });
 
 router.post("/pairup/category", (req, res) => {
-  const seekerNumber = req.body.seekerNumber;
-  const seekerPk = req.body.seekerPk;
+  const seekerNumber = helpers.popNumber(req.body.seekerNumber);
   const categories = req.body.categories;
   const seekerNick = faker.internet.userName();
+
   ListenerSchema.find({
+    "approvalStatus.approved": true,
     "status.online": true,
     "status.currentEngagedSessionId": "None",
     categories: { $in: categories },
   }).then((listenerDocs) => {
+    if (listenerDocs.length == 0) {
+      res.status(404).json({ noListenerFound: true });
+      return false;
+    }
+
     listenerDocs = _.shuffle(listenerDocs);
     const presentedListeners = [];
     listenerDocs.forEach((selectedListener) => {
@@ -70,7 +80,6 @@ router.post("/pairup/category", (req, res) => {
       $push: {
         presentedListeners: { $each: presentedListeners },
         seekerNumber: seekerNumber,
-        seekerPk: seekerPk,
         seekerNick: seekerNick,
         $push: { categories: { $each: categories } },
       },
@@ -91,7 +100,7 @@ router.post("/pairup/category", (req, res) => {
   });
 });
 
-router.put("/accept/session/:sessionid", ListenerAuth, (req, res) => {
+router.put("/accept/:sessionid", ListenerAuth, (req, res) => {
   const listenerId = req.listener.id;
   const sessionId = req.params.sessionid;
   const listenerNick = faker.internet.userName();
@@ -118,9 +127,11 @@ router.put("/accept/session/:sessionid", ListenerAuth, (req, res) => {
             ).then((sessionDoc) =>
               res.status(200).json({
                 tokens: { listener: listenerToken, seeker: seekerToken },
-                nicks: { seeker: seekerNick, listener: listenerNick },
-                listenerPk: listenerDoc.publicKey,
-                listerId: listenerId,
+                nicks: {
+                  seeker: sessionDoc.seekerNick,
+                  listener: listenerNick,
+                },
+                listenerId: listenerId,
                 sessionDoc,
               })
             );
@@ -131,9 +142,9 @@ router.put("/accept/session/:sessionid", ListenerAuth, (req, res) => {
   });
 });
 
-router.put("/disconnect", ListenerAuth, (req, res) => {
+router.put("/disconnect/:sessionId", ListenerAuth, (req, res) => {
   const listenerId = req.listener.id;
-  const sessionId = req.body.sessionId;
+  const sessionId = req.params.sessionId;
 
   ListenerSchema.findOne({ _id: listenerId })
     .then((listenerDoc) => {
@@ -166,97 +177,95 @@ router.put("/disconnect", ListenerAuth, (req, res) => {
     });
 });
 
-router.put(
-  "/report/by/seeker",
-  [auths.ListenerAuth, auths.SeekerAuth],
-  (req, res) => {
-    const listenerId = req.listener.id;
-    const seekerNumber = req.body.seekerNumber;
-    const sessionId = req.body.sessionId;
-    const message = req.body.message;
+router.put("/report/by/seeker/:sessionId", SeekerAuth, (req, res) => {
+  const listenerId = req.body.listenerId;
+  const seekerNumber = req.seeker.number;
+  const sessionId = req.params.sessionId;
+  const message = req.body.message;
 
-    PairingSchema.findOneAndUpdate(
-      { _id: sessionId },
-      {
-        "report.reportedBy": seekerNumber,
-        "report.reportedEntity": listenerId,
-        "report.reportedMessage": message,
-      }
-    )
-      .then(() => {
-        ListenerSchema.findOneAndUpdate(
-          { _id: listenerId },
-          {
-            $push: {
-              reportedBySeekers: {
-                sessionId: sessionId,
-                reporterNumber: seekerNumber,
-                reportedMessage: message,
-                reportDate: new Date(),
-              },
+  PairingSchema.findOneAndUpdate(
+    { _id: sessionId },
+    {
+      "report.reportedBy": seekerNumber,
+      "report.reportedEntity": listenerId,
+      "report.reportedMessage": message,
+    }
+  )
+    .then(() => {
+      ListenerSchema.findOneAndUpdate(
+        { _id: listenerId },
+        {
+          $push: {
+            reportedBySeekers: {
+              sessionId: sessionId,
+              reporterNumber: seekerNumber,
+              reportedMessage: message,
+              reportDate: new Date(),
             },
-          }
-        )
-          .then(() => res.status(200).json({ reported: true }))
-          .catch((e) => {
-            console.error(e);
-            res.sendStatus(500);
-          });
-      })
-      .catch((e) => {
-        console.error(e);
-        res.sendStatus(500);
-      });
-  }
-);
+          },
+        }
+      )
+        .then(() => res.status(200).json({ reported: true }))
+        .catch((e) => {
+          console.error(e);
+          res.sendStatus(500);
+        });
+    })
+    .catch((e) => {
+      console.error(e);
+      res.sendStatus(500);
+    });
+});
 
-router.put(
-  "/report/by/listener",
-  [auths.ListenerAuth, auths.SeekerAuth],
-  (req, res) => {
-    const listenerId = req.listener.id;
-    const seekerNumber = req.body.seekerNumber;
-    const sessionId = req.body.sessionId;
-    const message = req.body.message;
+router.put("/report/by/listener/:sessionId", ListenerAuth, (req, res) => {
+  const listenerId = req.listener.id;
+  const seekerNumber = helpers.popNumber(req.body.seekerNumber);
+  const sessionId = req.params.sessionId;
+  const message = req.body.message;
 
-    PairingSchema.findOneAndUpdate(
-      { _id: sessionId },
-      {
-        "report.reportedBy": listenerId,
-        "report.reportedEntity": seekerNumber,
-        "report.reportedMessage": message,
-      }
-    )
-      .then(() => {
-        ListenerSchema.findOneAndUpdate(
-          { _id: listenerId },
-          {
-            $push: {
-              infractionsReported: {
-                sessionId: sessionId,
-                reporterNumber: seekerNumber,
-                reportedMessage: message,
-                reportDate: new Date(),
-              },
+  PairingSchema.findOneAndUpdate(
+    { _id: sessionId },
+    {
+      "report.reportedBy": listenerId,
+      "report.reportedEntity": seekerNumber,
+      "report.reportedMessage": message,
+    }
+  )
+    .then(() => {
+      ListenerSchema.findOneAndUpdate(
+        { _id: listenerId },
+        {
+          $push: {
+            infractionsReported: {
+              sessionId: sessionId,
+              reporterNumber: seekerNumber,
+              reportedMessage: message,
+              reportDate: new Date(),
             },
-          }
-        )
-          .then(() => res.status(200).json({ reported: true }))
-          .catch((e) => {
-            console.error(e);
-            res.sendStatus(500);
-          });
-      })
-      .catch((e) => {
-        console.error(e);
-        res.sendStatus(500);
-      });
-  }
-);
+          },
+        }
+      )
+        .then(() => res.status(200).json({ reported: true }))
+        .catch((e) => {
+          console.error(e);
+          res.sendStatus(500);
+        });
+    })
+    .catch((e) => {
+      console.error(e);
+      res.sendStatus(500);
+    });
+});
 
 router.get("/get/all", (req, res) => {
   PairingSchema.find({})
-    .then((sessionDocs) => res.status(200).json({ sessionDocs }))
+    .then((sessionDocs) => {
+      if (sessionDocs.length < 1) {
+        res.status(404).json({ noSessionFound: true });
+        return false;
+      }
+      res.status(200).json({ sessionDocs });
+    })
     .catch((e) => {
       console.error(e);
       res.sendStatus(500);
@@ -265,20 +274,12 @@ router.get("/get/all", (req, res) => {
 
 router.get("/get/single/:sessionid", (req, res) => {
   PairingSchema.findOne({ _id: req.params.sessionid })
-    .then((sessionDoc) => res.status(200).json({ sessionDoc }))
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
-});
-
-router.put("/set/seeker/pk/:sessionId", DecryptMW, (req, res) => {
-  const sessionId = req.params.sessionId;
-  const pk = req.pk;
-
-  PairingSchema.findOneAndUpdate({ _id: sessionId }, { seekerPk: pk })
-    .then(() => {
-      res.status(200).json({ pkSet: true });
+    .then((sessionDoc) => {
+      if (!sessionDoc) {
+        res.status(404).json({ noSessionFound: true });
+        return false;
+      }
+      res.status(200).json({ sessionDoc });
     })
     .catch((e) => {
       console.error(e);

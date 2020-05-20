@@ -7,45 +7,36 @@ const AdminSchema = require("../Models/Admin");
 const CryptoJS = require("crypto-js");
 const AdminAuth = require("../Middleware/AdminAuth");
 const SuperAdminAuth = require("../Middleware/SuperAdminAuth");
+const helpers = require("../Services/Helpers");
 //GETs
-router.get("/get/all", SuperAdminAuth, (req, res) => {
-  AdminSchema.find({})
-    .then((adminDocs) => {
-      res.status(200).json({ adminDocs });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
+router.get("/get/all", SuperAdminAuth, async (req, res) => {
+  const adminDocs = await AdminSchema.find({});
+
+  if (adminDocs.length < 0) {
+    res.status(404).json({ noAdminFound: true });
+    return false;
+  }
+  res.status(200).json({ adminDocs });
 });
 
-router.get("/get/single/:adminid", SuperAdminAuth, (req, res) => {
-  AdminSchema.findOne({ _id: req.params.adminid })
-    .then((adminDoc) => {
-      if (!adminDoc) {
-        res.status(404).json({ noAdmin: true });
-        return false;
-      }
+router.get("/get/single/:adminid", SuperAdminAuth, async (req, res) => {
+  const adminDoc = await AdminSchema.findOne({ _id: req.params.adminid });
 
-      res.status(200).json({ adminDoc });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
+  if (!adminDoc) {
+    res.status(404).json({ noAdmin: true });
+    return false;
+  }
+
+  res.status(200).json({ adminDoc });
 });
 
 //POSTs
 
-router.post("/auth", (req, res) => {
-  const { userName, phoneNumber, email, password } = req.body;
+router.post("/auth", async (req, res) => {
+  const { email, password } = req.body;
 
   AdminSchema.findOne({
-    $or: [
-      { userName: userName },
-      { email: email },
-      { phoneNumber: phoneNumber },
-    ],
+    email: email,
   }).then((adminDoc) => {
     if (!adminDoc) {
       res.status(404).json({ adminExists: false });
@@ -83,19 +74,17 @@ router.post("/auth", (req, res) => {
 
 router.put("/edit/info", AdminAuth, (req, res) => {
   const adminId = req.admin.id;
-  const { email, phoneNumber, userName } = req.body;
-
- 
+  const { email, userName } = req.body;
+  const phoneNumber = helpers.popNumber(req.body.phoneNumber);
 
   AdminSchema.findOneAndUpdate(
     { _id: adminId },
     {
       userName: userName,
-      __enc_userName: false,
+
       phoneNumber: phoneNumber,
-      __enc_phoneNumber: false,
+
       email: email,
-      __enc_email: false,
     }
   )
     .then(() => res.status(200).json({ adminEdited: true }))
