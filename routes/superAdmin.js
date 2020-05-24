@@ -5,10 +5,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SuperAdminSchema = require("../Models/SuperAdmin");
 const AdminSchema = require("../Models/Admin");
-const CryptoJS = require("crypto-js");
 const SuperAdminAuth = require("../Middleware/SuperAdminAuth");
-const AsyncHandler = require("express-async-handler");
 const helpers = require("../Services/Helpers");
+const _ = require("lodash");
 //POSTs
 
 router.post("/create", async (req, res) => {
@@ -148,19 +147,21 @@ router.post("/create/admin", SuperAdminAuth, async (req, res) => {
   const userNameCheck = await AdminSchema.findOne({
     userName: adminUserName,
   });
-  if (userNameCheck) {
+  if (!_.isNull(userNameCheck) && userNameCheck.userName == adminUserName) {
     res.status(401).json({ isSame: "userName" });
     return false;
   }
 
   const numberCheck = await AdminSchema.findOne({ phoneNumber: adminNumber });
-  if (numberCheck) {
+
+  if (!_.isNull(numberCheck) && numberCheck.phoneNumber == adminNumber) {
     res.status(401).json({ isSame: "number" });
     return false;
   }
 
   const emailCheck = await AdminSchema.findOne({ email: adminEmail });
-  if (emailCheck) {
+
+  if (!_.isNull(emailCheck) && emailCheck.email == adminEmail) {
     res.status(401).json({ isSame: "email" });
     return false;
   }
@@ -172,7 +173,7 @@ router.post("/create/admin", SuperAdminAuth, async (req, res) => {
     password: bcrypt.hashSync(adminPassword, 12),
   });
 
-  const savedDoc = admin.save();
+  const savedDoc = await admin.save();
 
   await SuperAdminSchema.findOneAndUpdate(
     { _id: superId },

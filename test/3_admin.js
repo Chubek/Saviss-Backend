@@ -254,7 +254,7 @@ describe("SuperAdmin", function () {
   });
   describe("Admin routes", function () {
     before(async function () {
-      const admin = await Admin.findOne({});
+      const admin = await Admin.findOne({ userName: "Kiram" });
       adminId = admin._id;
       adminToken = jwt.sign({ id: adminId }, process.env.JWT_SECRET);
       adminTokenPk = adminToken.split(".")[0];
@@ -304,7 +304,7 @@ describe("SuperAdmin", function () {
         chai
           .request(server)
           .put("/admin/change/password")
-          .set("x-auth-token-adminr", adminToken)
+          .set("x-auth-token-admin", adminToken)
           .send({
             oldPassword: "T3stP4ssw0rd",
             newPassword: "Th!rstyBr0th3rs",
@@ -317,12 +317,14 @@ describe("SuperAdmin", function () {
             done();
           });
       });
+      after(async function () {
+        const admins = await Admin.findOne({ _id: adminId });
+      });
       it("it should auth admin with new email and password", function (done) {
         chai
           .request(server)
           .post("/admin/auth")
           .send({
-            phoneNumber: "+984234247",
             email: "kill@hellobill.com",
             password: "Th!rstyBr0th3rs",
           })
@@ -334,17 +336,16 @@ describe("SuperAdmin", function () {
             expect(res.body.token.split(".")[0]).to.equal(
               adminTokenPk.toString()
             );
-            expect(res.body.superDoc._id).to.equal(id.toString());
             done();
           });
       });
     });
     describe("approve/ban listener", function () {
       before(function () {
-        banDate = new Date().toISOString().substr(11, 5).replace(":", "");
+        banDate = new Date();
       });
-      before(function () {
-        const listenerOne = new Listener({
+      before(async function () {
+        const listener = new Listener({
           userName: "Hiram",
           email: "hiram@goldman.com",
           "otp.password": "1254",
@@ -357,9 +358,9 @@ describe("SuperAdmin", function () {
           emailVerificationCode: "1121",
         });
 
-        listenerOne.save().then((listenerDocOne) => {
-          listenerId = listenerDocOne._id;
-        });
+        const listenerDoc = await listener.save();
+
+        listenerId = listenerDoc._id;
       });
       it("it should approve the listener", function (done) {
         chai
@@ -394,8 +395,10 @@ describe("SuperAdmin", function () {
           });
       });
       it("it should reaffirm listener ban and approval", async function () {
-        const listenerDoc = await Listener.findOne({ id: listenerId });
-        expect(listenerDoc.bannedStatus.banDate).to.equal(banDate);
+        const listenerDoc = await Listener.findOne({ _id: listenerId });
+        expect(
+          listenerDoc.bannedStatus.expireDate.toISOString().split(".")[0]
+        ).to.equal(banDate.toISOString().split(".")[0]);
         expect(listenerDoc.approvalStatus.approved).to.be.true;
       });
     });
@@ -455,7 +458,7 @@ describe("SuperAdmin", function () {
           .set("x-auth-token-super", token)
           .end((err, res) => {
             if (err) done(err);
-            expect(res).to.have.status(200);
+            expect(res).to.have.status(404);
             expect(res.body).to.have.property("noAdmin");
             expect(res.body.noAdmin).to.be.true;
             done();

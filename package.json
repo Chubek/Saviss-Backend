@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "server": "nodemon index.js",
-    "test": "mocha --timeout 50000 || true"
+    "test": "mocha --timeout 50000 --reporter mochawesome"
   },
   "repository": {
     "type": "git",
@@ -38,7 +38,7 @@
     "lodash": "^4.17.15",
     "mocha": "^7.1.2",
     "mongoose": "^5.9.9",
-    "mongoose-jumblator": "^1.2.3",
+    "mongoose-jumblator": "^1.2.4",
     "node-redis-pubsub": "^4.0.0",
     "node-uuid": "^1.4.8",
     "nodemailer": "^6.4.6",
@@ -49,6 +49,9 @@
     "websocket": "^1.0.31"
   },
   "devDependencies": {
-    "nodemon": "^2.0.3"
+    "mochawesome": "^6.1.1",
+    "nodemon": "^2.0.3",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
   }
 }

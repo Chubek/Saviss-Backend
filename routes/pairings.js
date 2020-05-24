@@ -6,14 +6,24 @@ const _ = require("lodash");
 const PairingSchema = require("../Models/Pairings");
 const SeekerAuth = require("../Middleware/SeekerAuth");
 const ListenerAuth = require("../Middleware/ListenerAuth");
+const BlockedNumberSchema = require("../Models/BlockedNumbers");
 const auths = { SeekerAuth, ListenerAuth };
 const faker = require("faker");
 const DecryptMW = require("../Middleware/DecryptMW");
 const helpers = require("../Services/Helpers");
 
-router.post("/pairup/randomly", (req, res) => {
+router.post("/pairup/randomly", async (req, res) => {
   const seekerNumber = helpers.popNumber(req.body.seekerNumber);
   const seekerNick = faker.internet.userName();
+
+  const blockedNumber = await BlockedNumberSchema.findOne({
+    blockedNumber: seekerNumber,
+  });
+
+  if (blockedNumber) {
+    res.status(403).json({ numberBlocked: true });
+    return false;
+  }
 
   ListenerSchema.find({
     "approvalStatus.approved": true,
@@ -54,10 +64,18 @@ router.post("/pairup/randomly", (req, res) => {
   });
 });
 
-router.post("/pairup/category", (req, res) => {
+router.post("/pairup/category", async (req, res) => {
   const seekerNumber = helpers.popNumber(req.body.seekerNumber);
   const categories = req.body.categories;
   const seekerNick = faker.internet.userName();
+
+  const blockedNumber = await BlockedNumberSchema.findOne({
+    blockedNumber: seekerNumber,
+  });
+  if (blockedNumber) {
+    res.status(403).json({ numberBlocked: true });
+    return false;
+  }
 
   ListenerSchema.find({
     "approvalStatus.approved": true,

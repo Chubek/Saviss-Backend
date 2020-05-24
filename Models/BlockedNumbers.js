@@ -4,8 +4,7 @@ const jumblator = require("mongoose-jumblator").fieldEncryptionPlugin;
 const cryptoRandomString = require("crypto-random-string");
 const BlockedNumbersSchema = Schema({
   blockedNumber: {
-    type: String,
-    unique: true,
+    type: String,    
     encrypt: true,
     searchable: true,
   },

@@ -12,7 +12,7 @@ const helpers = require("../Services/Helpers");
 router.get("/get/all", SuperAdminAuth, async (req, res) => {
   const adminDocs = await AdminSchema.find({});
 
-  if (adminDocs.length < 0) {
+  if (adminDocs.length < 1) {
     res.status(404).json({ noAdminFound: true });
     return false;
   }
@@ -34,7 +34,7 @@ router.get("/get/single/:adminid", SuperAdminAuth, async (req, res) => {
 
 router.post("/auth", async (req, res) => {
   const { email, password } = req.body;
-
+  console.log(email);
   AdminSchema.findOne({
     email: email,
   }).then((adminDoc) => {

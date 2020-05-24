@@ -6,12 +6,10 @@ const Schema = mongoose.Schema;
 const AdminSchema = Schema({
   userName: {
     type: String,
-    unique: true,
   },
   email: {
     type: String,
-    unique: true,
-    encryption: true,
+    encrypt: true,
     searchable: true,
   },
   dateCreated: {
@@ -20,13 +18,11 @@ const AdminSchema = Schema({
   },
   phoneNumber: {
     type: String,
-    unique: true,
-    encryption: true,
+    encrypt: true,
     searchable: true,
   },
   password: {
     type: String,
-    required: true,
   },
   loginDates: [Date],
   numbersBlockedId: [String],
