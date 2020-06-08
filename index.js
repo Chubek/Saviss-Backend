@@ -24,15 +24,11 @@ app.use(
 );
 
 const db = mongoose
-  .connect(
-    "mongodb://" +
-      process.env.DB_HOST +
-      ":" +
-      process.env.DB_PORT +
-      "/" +
-      process.env.DB_NAME,
-    { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }
-  )
+  .connect(process.env.MONGO_DB_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+  })
   .then(() => console.error("MongoDB Connected".green.inverse))
   .catch((e) => console.error(`${e}`.underline.red));
 mongoose.set("useFindAndModify", false);
