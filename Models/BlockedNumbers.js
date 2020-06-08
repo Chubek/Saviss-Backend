@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const jumblator = require("mongoose-jumblator").fieldEncryptionPlugin;
-const cryptoRandomString = require("crypto-random-string");
 const BlockedNumbersSchema = Schema({
   blockedNumber: {
     type: String,    

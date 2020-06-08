@@ -13,9 +13,6 @@ const sha256File = require("sha256-file");
 const imagemin = require("imagemin");
 const imageminJpegtran = require("imagemin-jpegtran");
 const imageminPngquant = require("imagemin-pngquant");
-const SendOTP = require("../Services/SendOTP");
-const asyncHandler = require("express-async-handler");
-const cryptoRandomString = require("crypto-random-string");
 const helpers = require("../Services/Helpers");
 const DecryptMW = require("../Middleware/DecryptMW");
 
