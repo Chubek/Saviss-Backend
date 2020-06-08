@@ -24,7 +24,7 @@ app.use(
 );
 
 const db = mongoose
-  .connect(process.env.MONGO_DB_URL, {
+  .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
