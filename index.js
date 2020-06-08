@@ -45,7 +45,7 @@ app.use("/session", require("./routes/pairings"));
   res.sendFile("index.html", { root: path.join(__dirname, "dist") });
 });*/
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT;
 
 app.listen(port, () =>
   console.error(`Server started on port ${port}`.blue.inverse)
