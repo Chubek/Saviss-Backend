@@ -28,7 +28,7 @@ function startServer() {
     });
   });
 
-  server.listen(3030, () => {
+  server.listen(process.env.PORT, () => {
     console.log(`Server started on port ${server.address().port} :)`);
   });
 }
