@@ -7,7 +7,6 @@ const cors = require("cors");
 const colors = require("colors");
 const websocketServer = require("./Chat/server");
 
-websocketServer();
 
 const app = express();
 
