@@ -28,7 +28,7 @@ function startServer() {
     });
   });
 
-  server.listen(process.env.PORT, () => {
+  server.listen(process.env.WS_PORT, () => {
     console.log(`Server started on port ${server.address().port} :)`);
   });
 }
