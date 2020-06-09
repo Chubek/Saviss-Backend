@@ -5,7 +5,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const colors = require("colors");
-const websocketServer = require("./Chat/server");
+const chatServer = require("./Chat/server");
 
 
 const app = express();

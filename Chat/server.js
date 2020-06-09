@@ -1,34 +1,65 @@
-const express = require("express");
+var createError = require('http-errors');
 const http = require("http");
-const WebSocket = require("ws");
-let clients = {};
+var express = require('express');
 
-const app = express();
+
+var app = express();
+
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 
-wss.on("connection", function connection(ws, req) {
-  const userID = parseInt(req.url.substr(1), 10);
-  clients[userID] = wss;
-  console.log(
-    "connected: " + userID + " in " + Object.getOwnPropertyNames(wss)
-  );
-  ws.on("message", function incoming(data) {
-    console.log("received from " + userID + ": " + data);
-    const messageArray = JSON.parse(data);
-    const toUserWebSocket = clients[messageArray[0]];
-    if (toUserWebSocket) {
-      console.log(
-        "sent to " + messageArray[0] + ": " + JSON.stringify(messageArray)
-      );
-      messageArray[0] = userID;
-      toUserWebSocket.send(JSON.stringify(messageArray));
-    }
-  });
+
+global.users = [];
+const io = require('socket.io')(srver);
+
+io.use((socket, next) => {
+  let token = socket.handshake.query.username;
+  if (token) {
+    return next();
+  }
+  return next(new Error('authentication error'));
 });
+
+io.on('connection', (client) => {
+  let token = client.handshake.query.username;
+  client.on('disconnect', () => {
+    var clientid = client.id;
+    for (var i = 0; i < users.length; i++)
+      if (users[i].id && users[i].id == clientid) {
+        users.splice(i, 1);
+        break;
+      }
+  });
+  users.push({
+    id: client.id,
+    name: token
+  });
+  client.on('typing', (data) => {
+    io.emit("typing", data)
+  });
+
+  client.on('stoptyping', (data) => {
+    io.emit("stoptyping", data)
+  });
+
+  client.on('message', (data) => {
+    io.emit("message", data)
+  });
+
+  io.emit("newuser", {
+    id: client.id,
+    name: token
+  })
+});
+
 
 server.listen(process.env.WS_PORT, () => {
   console.log(`Server started on port ${server.address().port} :)`);
 });
 
-module.exports = server;
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  next(createError(404));
+});
+
+
+module.exports = app;

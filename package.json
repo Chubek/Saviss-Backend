@@ -22,6 +22,7 @@
     "amqp": "^0.2.7",
     "axios": "^0.19.2",
     "bcrypt": "^4.0.1",
+    "bufferutil": "^4.0.1",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "colors": "^1.4.0",
@@ -46,7 +47,9 @@
     "randomstring": "^1.1.5",
     "redis": "^3.0.2",
     "sha256-file": "^1.0.0",
+    "socket.io": "^2.3.0",
     "stream-chat": "^1.8.0",
+    "utf-8-validate": "^5.0.2",
     "websocket": "^1.0.31",
     "ws": "^7.3.0"
   },
