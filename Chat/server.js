@@ -9,7 +9,7 @@ const server = http.createServer(app);
 
 
 global.users = [];
-const io = require('socket.io')(srver);
+const io = require('socket.io')(server);
 
 io.use((socket, next) => {
   let token = socket.handshake.query.username;
