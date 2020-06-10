@@ -30,6 +30,7 @@ io.set("transports", [
   "jsonp-polling",
   "polling",
 ]);
+io.set("polling duration", 100); 
 
 io.use((socket, next) => {
   let token = socket.handshake.query.username;
