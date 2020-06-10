@@ -17,6 +17,7 @@ global.users = [];
 const server = http.createServer(app);
 
 const io = require('socket.io')(server,{
+  serveClient: false,
   path: '/socket',
   pingInterval: 10000,
   pingTimeout: 5000
