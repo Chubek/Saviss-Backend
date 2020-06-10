@@ -54,11 +54,6 @@ io.on('connection', (client) => {
 });
 
 
-server.listen(process.env.PORT, () => {
-  console.log(`Server started on port ${server.address().port} :)`);
-});
-
-// catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
 });
@@ -99,7 +94,7 @@ app.use("/session", require("./routes/pairings"));
 const port = process.env.PORT;
 
 server.listen(port, () =>
-  console.error(`Server started on port ${port}`.blue.inverse)
+  console.error(`Server started on port ${server.address().port}`.blue.inverse)
 );
 
 module.exports = app;
