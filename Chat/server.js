@@ -1,3 +1,4 @@
+/*
 var createError = require('http-errors');
 const http = require("http");
 var express = require('express');
@@ -50,7 +51,7 @@ io.on('connection', (client) => {
 
 /*server.listen(process.env.PORT, () => {
   console.log(`Server started on port ${server.address().port} :)`);
-});*/
+});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -59,3 +60,4 @@ app.use(function (req, res, next) {
 
 
 module.exports = app;
+*/
