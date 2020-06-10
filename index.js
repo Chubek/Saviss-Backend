@@ -41,10 +41,19 @@ io.use((socket, next) => {
 });
 
 io.on("connection", (client) => {
-  console.log(client.handshake.query.username + "connected.");
+  console.log(client.handshake.query.username + " connected.");
   let token = client.handshake.query.username;
+  socket.join(client.handshake.query.sessionId);
+  console.log(
+    client.handshake.query.username +
+      " joined " +
+      client.handshake.query.sessionId
+  );
   client.on("disconnect", () => {
     var clientid = client.id;
+    console.log(
+      client.handshake.query.username + " left the client " + client.id
+    );
     console.log("Client ID: " + clientid);
     for (var i = 0; i < users.length; i++)
       if (users[i].id && users[i].id == clientid) {
