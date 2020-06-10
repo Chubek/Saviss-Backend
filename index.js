@@ -43,7 +43,7 @@ io.use((socket, next) => {
 io.on("connection", (client) => {
   console.log(client.handshake.query.username + " connected.");
   let token = client.handshake.query.username;
-  socket.join(client.handshake.query.sessionId);
+  io.join(client.handshake.query.sessionId);
   console.log(
     client.handshake.query.username +
       " joined " +
