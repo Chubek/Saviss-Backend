@@ -5,13 +5,65 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const colors = require("colors");
-const chatServer = require("./Chat/server");
-
-
+var createError = require('http-errors');
+const http = require("http");
 const app = express();
 
 global.appRoot = path.resolve(__dirname);
 global.envPath = path.join(appRoot, ".env");
+global.users = [];
+
+
+const server = http.createServer(app);
+
+const io = require('socket.io')(server);
+io.use((socket, next) => {
+  let token = socket.handshake.query.username;
+  if (token) {
+    return next();
+  }
+  return next(new Error('authentication error'));
+});
+
+io.on('connection', (client) => {
+  let token = client.handshake.query.username;
+  client.on('disconnect', () => {
+    var clientid = client.id;
+    for (var i = 0; i < users.length; i++)
+      if (users[i].id && users[i].id == clientid) {
+        users.splice(i, 1);
+        break;
+      }
+  });
+  users.push({
+    id: client.id,
+    name: token
+  });
+  client.on('typing', (data) => {
+    io.emit("typing", data)
+  });
+
+  client.on('stoptyping', (data) => {
+    io.emit("stoptyping", data)
+  });
+
+  client.on('message', (data) => {
+    io.emit("message", data)
+  });
+
+});
+
+
+server.listen(process.env.PORT, () => {
+  console.log(`Server started on port ${server.address().port} :)`);
+});
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  next(createError(404));
+});
+
+
 
 app.use(cors());
 app.use(express.json());
@@ -46,7 +98,7 @@ app.use("/session", require("./routes/pairings"));
 
 const port = process.env.PORT;
 
-app.listen(port, () =>
+server.listen(port, () =>
   console.error(`Server started on port ${port}`.blue.inverse)
 );
 

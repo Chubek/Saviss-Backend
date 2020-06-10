@@ -45,10 +45,6 @@ io.on('connection', (client) => {
     io.emit("message", data)
   });
 
-  io.emit("newuser", {
-    id: client.id,
-    name: token
-  })
 });
 
 
