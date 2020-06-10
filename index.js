@@ -30,7 +30,7 @@ io.set("transports", [
   "jsonp-polling",
   "polling",
 ]);
-io.set("polling duration", 100); 
+io.set("polling duration", 100);
 
 io.use((socket, next) => {
   let token = socket.handshake.query.username;
@@ -41,9 +41,11 @@ io.use((socket, next) => {
 });
 
 io.on("connection", (client) => {
+  console.log(client.handshake.query.username + "connected.");
   let token = client.handshake.query.username;
   client.on("disconnect", () => {
     var clientid = client.id;
+    console.log("Client ID: " + clientid);
     for (var i = 0; i < users.length; i++)
       if (users[i].id && users[i].id == clientid) {
         users.splice(i, 1);
@@ -55,14 +57,17 @@ io.on("connection", (client) => {
     name: token,
   });
   client.on("typing", (data) => {
+    console.log("typing emitted: " + data);
     io.emit("typing", data);
   });
 
   client.on("stoptyping", (data) => {
+    console.log("stoptyping emitted: " + data);
     io.emit("stoptyping", data);
   });
 
   client.on("message", (data) => {
+    console.log("message emitted: " + data);
     io.emit("message", data);
   });
 });
