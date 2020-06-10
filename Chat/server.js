@@ -52,7 +52,7 @@ io.on('connection', (client) => {
 });
 
 
-server.listen(process.env.WS_PORT, () => {
+server.listen(process.env.PORT, () => {
   console.log(`Server started on port ${server.address().port} :)`);
 });
 
