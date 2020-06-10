@@ -48,9 +48,9 @@ io.on('connection', (client) => {
 });
 
 
-server.listen(process.env.PORT, () => {
+/*server.listen(process.env.PORT, () => {
   console.log(`Server started on port ${server.address().port} :)`);
-});
+});*/
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
