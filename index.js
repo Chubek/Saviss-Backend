@@ -20,7 +20,7 @@ const io = require('socket.io')(server,{
   path: '/socket',
   pingInterval: 10000,
   pingTimeout: 5000
-}) );
+});
 io.use((socket, next) => {
   let token = socket.handshake.query.username;
   if (token) {
