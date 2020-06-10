@@ -5,7 +5,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const colors = require("colors");
-var createError = require('http-errors');
+var createError = require("http-errors");
 const http = require("http");
 const app = express();
 
@@ -13,26 +13,35 @@ global.appRoot = path.resolve(__dirname);
 global.envPath = path.join(appRoot, ".env");
 global.users = [];
 
-
 const server = http.createServer(app);
 
-const io = require('socket.io')(server,{
+const io = require("socket.io")(server, {
   serveClient: false,
-  path: '/socket',
+  path: "/socket",
   pingInterval: 10000,
-  pingTimeout: 5000
+  pingTimeout: 5000,
 });
+
+io.set("transports", [
+  "websocket",
+  "flashsocket",
+  "htmlfile",
+  "xhr-polling",
+  "jsonp-polling",
+  "polling",
+]);
+
 io.use((socket, next) => {
   let token = socket.handshake.query.username;
   if (token) {
     return next();
   }
-  return next(new Error('authentication error'));
+  return next(new Error("authentication error"));
 });
 
-io.on('connection', (client) => {
+io.on("connection", (client) => {
   let token = client.handshake.query.username;
-  client.on('disconnect', () => {
+  client.on("disconnect", () => {
     var clientid = client.id;
     for (var i = 0; i < users.length; i++)
       if (users[i].id && users[i].id == clientid) {
@@ -42,28 +51,24 @@ io.on('connection', (client) => {
   });
   users.push({
     id: client.id,
-    name: token
+    name: token,
   });
-  client.on('typing', (data) => {
-    io.emit("typing", data)
-  });
-
-  client.on('stoptyping', (data) => {
-    io.emit("stoptyping", data)
+  client.on("typing", (data) => {
+    io.emit("typing", data);
   });
 
-  client.on('message', (data) => {
-    io.emit("message", data)
+  client.on("stoptyping", (data) => {
+    io.emit("stoptyping", data);
   });
 
+  client.on("message", (data) => {
+    io.emit("message", data);
+  });
 });
-
 
 app.use(function (req, res, next) {
   next(createError(404));
 });
-
-
 
 app.use(cors());
 app.use(express.json());
