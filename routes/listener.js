@@ -70,12 +70,12 @@ router.get("/get/username", ListenerAuth, (req, res) => {
 //POSTs
 
 router.post("/register", async (req, res) => {
-  const { userName, email, categories } = req.body;
+  const { userName, email, categories, bio } = req.body;
   let { number } = req.body;
   const isTest = req.body.test === "true" ? true : false;
   let password = _.random(100, 999) + _.random(1000, 9999);
   if (isTest) {
-    password = "0000";
+    password = "9999";
   }
   const emailVerificationCode = _.random(100, 999) + _.random(1000, 9999);
   number = helpers.popNumber(number);
@@ -84,8 +84,8 @@ router.post("/register", async (req, res) => {
     res.status(401).json({ notSent: "userName" });
     return false;
   }
-  if (!email) {
-    res.status(401).json({ notSent: "email" });
+  if (!bio) {
+    res.status(401).json({ notSent: "bio" });
     return false;
   }
 
@@ -121,6 +121,7 @@ router.post("/register", async (req, res) => {
   const Listener = new ListenerSchema({
     userName: userName,
     email: email,
+    bio: bio,
     "otp.password": password,
     "otp.creationHour": new Date().toISOString().substr(11, 5).replace(":", ""),
     cell: number,
@@ -199,7 +200,7 @@ router.put("/request/otp", (req, res) => {
 
   let otp = _.random(100, 999) + _.random(1000, 9999);
   if (isTest) {
-    otp = "0000";
+    otp = "9999";
   }
   ListenerSchema.findOneAndUpdate(
     { cell: number },

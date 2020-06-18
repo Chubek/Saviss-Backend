@@ -15,6 +15,7 @@ const helpers = require("../Services/Helpers");
 router.post("/pairup/randomly", async (req, res) => {
   const seekerNumber = helpers.popNumber(req.body.seekerNumber);
   const seekerNick = faker.internet.userName();
+  const seekerReason = req.body.seekerReason;
 
   const blockedNumber = await BlockedNumberSchema.findOne({
     blockedNumber: seekerNumber,
@@ -64,6 +65,8 @@ router.post("/pairup/randomly", async (req, res) => {
   });
 });
 
+
+/*
 router.post("/pairup/category", async (req, res) => {
   const seekerNumber = helpers.popNumber(req.body.seekerNumber);
   const categories = req.body.categories;
@@ -117,6 +120,7 @@ router.post("/pairup/category", async (req, res) => {
       });
   });
 });
+*/
 
 router.put("/accept/:sessionid", ListenerAuth, (req, res) => {
   const listenerId = req.listener.id;

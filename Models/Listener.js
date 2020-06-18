@@ -11,6 +11,9 @@ const ListenrSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  bio: {
+    type: String,
+  },
   email: {
     type: String,
     encrypt: true,
