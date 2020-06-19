@@ -101,10 +101,7 @@ router.post("/register", async (req, res) => {
   }
 
   let listenerDoc = await ListenerSchema.findOne({ userName: userName });
-  if (listenerDoc) {
-    res.status(401).json({ isSame: "userName" });
-    return false;
-  }
+
 
   listenerDoc = await ListenerSchema.findOne({ cell: number });
   if (listenerDoc) {
@@ -367,6 +364,20 @@ router.put("/set/categories", ListenerAuth, (req, res) => {
       console.error(e);
       res.sendStatus(500);
     });
+});
+
+router.put("/toggle/available", ListenerAuth, async (req, res) => {
+  const listenerId = req.listener.id;
+
+  const listenerSchema = await ListenerSchema.findOne({ _id: listenerId });
+  const available = listenerSchema.available;
+
+  await ListenerSchema.findOneAndUpdate(
+    { _id: listenerId },
+    { available: !available }
+  );
+
+  res.sendStatus(200);
 });
 
 module.exports = router;

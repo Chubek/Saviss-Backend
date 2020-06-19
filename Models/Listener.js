@@ -96,6 +96,10 @@ const ListenrSchema = new Schema({
     encrypt: true,
     searchable: true,
   },
+  available: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 ListenrSchema.plugin(jumblator, {
