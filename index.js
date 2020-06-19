@@ -13,6 +13,23 @@ global.appRoot = path.resolve(__dirname);
 global.envPath = path.join(appRoot, ".env");
 global.users = [];
 
+app.use("/avatars", express.static(path.join(__dirname, "public/img/avatars")));
+
+app.use("/listener", require("./routes/listener"));
+app.use("/admin", require("./routes/admin"));
+app.use("/blocked", require("./routes/blockedNumbers"));
+app.use("/superAdmin", require("./routes/superAdmin"));
+app.use("/session", require("./routes/pairings"));
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  fileUpload({
+    createParentPath: true,
+  })
+);
+
 const server = http.createServer(app);
 
 const io = require("socket.io")(server, {
@@ -33,7 +50,8 @@ io.set("transports", [
 io.set("polling duration", 100);
 
 io.use((socket, next) => {
-  let token = socket.handshake.query.username;typig
+  let token = socket.handshake.query.username;
+  typig;
   if (token) {
     return next();
   }
@@ -85,15 +103,6 @@ app.use(function (req, res, next) {
   next(createError(404));
 });
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(
-  fileUpload({
-    createParentPath: true,
-  })
-);
-
 const db = mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
@@ -103,14 +112,6 @@ const db = mongoose
   .then(() => console.error("MongoDB Connected".green.inverse))
   .catch((e) => console.error(`${e}`.underline.red));
 mongoose.set("useFindAndModify", false);
-
-app.use("/avatars", express.static(path.join(__dirname, "public/img/avatars")));
-
-app.use("/listener", require("./routes/listener"));
-app.use("/admin", require("./routes/admin"));
-app.use("/blocked", require("./routes/blockedNumbers"));
-app.use("/superAdmin", require("./routes/superAdmin"));
-app.use("/session", require("./routes/pairings"));
 
 /*app.get("/", function(req, res) {
   res.sendFile("index.html", { root: path.join(__dirname, "dist") });
