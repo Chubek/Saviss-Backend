@@ -78,7 +78,6 @@ router.post("/register", async (req, res) => {
   if (isTest) {
     password = "9999";
   }
-  const emailVerificationCode = _.random(100, 999) + _.random(1000, 9999);
   number = helpers.popNumber(number);
 
   if (!userName) {
@@ -107,12 +106,6 @@ router.post("/register", async (req, res) => {
     return false;
   }
 
-  listenerDoc = await ListenerSchema.findOne({ email: email });
-  if (listenerDoc) {
-    res.status(401).json({ isSame: "email" });
-    return false;
-  }
-
   listenerDoc = await ListenerSchema.findOne({ cell: number });
   if (listenerDoc) {
     res.status(401).json({ isSame: "number" });
@@ -121,13 +114,10 @@ router.post("/register", async (req, res) => {
 
   const Listener = new ListenerSchema({
     userName: userName,
-    email: email,
     bio: bio,
     "otp.password": password,
     "otp.creationHour": new Date().toISOString().substr(11, 5).replace(":", ""),
     cell: number,
-    $addToSet: { categories: { $each: categories } },
-    emailVerificationCode: emailVerificationCode,
   });
 
   const savedDoc = await Listener.save();
