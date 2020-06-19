@@ -13,14 +13,6 @@ global.appRoot = path.resolve(__dirname);
 global.envPath = path.join(appRoot, ".env");
 global.users = [];
 
-app.use("/avatars", express.static(path.join(__dirname, "public/img/avatars")));
-
-app.use("/listener", require("./routes/listener"));
-app.use("/admin", require("./routes/admin"));
-app.use("/blocked", require("./routes/blockedNumbers"));
-app.use("/superAdmin", require("./routes/superAdmin"));
-app.use("/session", require("./routes/pairings"));
-
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,6 +21,14 @@ app.use(
     createParentPath: true,
   })
 );
+
+app.use("/avatars", express.static(path.join(__dirname, "public/img/avatars")));
+
+app.use("/listener", require("./routes/listener"));
+app.use("/admin", require("./routes/admin"));
+app.use("/blocked", require("./routes/blockedNumbers"));
+app.use("/superAdmin", require("./routes/superAdmin"));
+app.use("/session", require("./routes/pairings"));
 
 const server = http.createServer(app);
 
