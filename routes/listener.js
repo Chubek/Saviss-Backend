@@ -70,6 +70,7 @@ router.get("/get/username", ListenerAuth, (req, res) => {
 //POSTs
 
 router.post("/register", async (req, res) => {
+  console.log(req.body);
   const { userName, bio } = req.body;
   let { number } = req.body;
   const isTest = req.body.isTest === "true" ? true : false;
