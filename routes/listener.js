@@ -70,9 +70,9 @@ router.get("/get/username", ListenerAuth, (req, res) => {
 //POSTs
 
 router.post("/register", async (req, res) => {
-  const { userName, email, categories, bio } = req.body;
+  const { userName, bio } = req.body;
   let { number } = req.body;
-  const isTest = req.body.test === "true" ? true : false;
+  const isTest = req.body.isTest === "true" ? true : false;
   let password = _.random(100, 999) + _.random(1000, 9999);
   if (isTest) {
     password = "9999";
@@ -196,7 +196,7 @@ router.post("/auth", (req, res) => {
 router.put("/request/otp", (req, res) => {
   let { number } = req.body;
   number = helpers.popNumber(number);
-  const isTest = req.body.test === "true" ? true : false;
+  const isTest = req.body.isTest === "true" ? true : false;
 
   let otp = _.random(100, 999) + _.random(1000, 9999);
   if (isTest) {
