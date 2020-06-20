@@ -19,9 +19,11 @@
   },
   "homepage": "https://github.com/Chubek/247buddy#readme",
   "dependencies": {
+    "ably": "^1.2.1",
     "amqp": "^0.2.7",
     "axios": "^0.19.2",
     "bcrypt": "^4.0.1",
+    "body-parser": "^1.19.0",
     "bufferutil": "^4.0.1",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",

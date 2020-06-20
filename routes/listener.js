@@ -19,18 +19,18 @@ const DecryptMW = require("../Middleware/DecryptMW");
 //GETs
 router.get("/get/all", (req, res) => {
   ListenerSchema.find({})
-    .then((listenerDocs) => {
-      if (listenerDocs.length < 1) {
-        res.status(404).json({ noListenerFound: true });
-        return false;
-      }
-      res.status(200).json({ listenerDocs });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
-});
+      .then((listenerDocs) => {
+        if (listenerDocs.length < 1) {
+          res.status(404).json({noListenerFound: true});
+          return false;
+        }
+        res.status(200).json({listenerDocs});
+      })
+      .catch((e) => {
+        console.error(e);
+        res.sendStatus(500);
+      });
+})
 
 router.get("/get/single/:listenerid", (req, res) => {
   const listenerId = req.params.listenerid;
