@@ -7,62 +7,48 @@ const PairingSchema = require("../Models/Pairings");
 const SeekerAuth = require("../Middleware/SeekerAuth");
 const ListenerAuth = require("../Middleware/ListenerAuth");
 const BlockedNumberSchema = require("../Models/BlockedNumbers");
-const auths = { SeekerAuth, ListenerAuth };
+const auths = {SeekerAuth, ListenerAuth};
 const faker = require("faker");
 const DecryptMW = require("../Middleware/DecryptMW");
 const helpers = require("../Services/Helpers");
+const WaitingPool = require("../Models/WaitingPool")
 
-router.post("/pairup/randomly", async (req, res) => {
-  const seekerNumber = helpers.popNumber(req.body.seekerNumber);
-  const seekerNick = faker.internet.userName();
-  const seekerReason = req.body.seekerReason;
+router.post("/createSession", async (req, res) => {
+    const seekerNumber = helpers.popNumber(req.body.seekerNumber);
+    const seekerNick = faker.internet.userName();
+    const seekerReason = req.body.seekerReason;
 
-  const blockedNumber = await BlockedNumberSchema.findOne({
-    blockedNumber: seekerNumber,
-  });
+    try {
+        const blockedNumbers = await BlockedNumberSchema.findOne({blockedNumber: seekerNumber});
 
-  if (blockedNumber) {
-    res.status(403).json({ numberBlocked: true });
-    return false;
-  }
+        if (blockedNumbers) {
+            res.sendStatus(403);
+            return false;
+        }
 
-  ListenerSchema.find({
-    "approvalStatus.approved": true,
-    "status.online": true,
-    "status.currentEngagedSessionId": "None",
-  }).then((listenerDocs) => {
-    if (listenerDocs.length == 0) {
-      res.status(404).json({ noListenerFound: true });
-      return false;
+        const sessionSchema = new PairingSchema({
+            seekerNumber: seekerNumber,
+            seekerReason: seekerReason,
+            seekerNick: seekerNick
+        });
+
+
+        const savedDoc = await sessionSchema.save();
+
+        const waitingPool = new WaitingPool({
+            sessionId: savedDoc._id,
+        })
+
+        await waitingPool.save();
+
+
+        res.status(200).json({sessionId: savedDoc._id});
+    } catch (e) {
+        console.log(e);
+        res.status(500).json({error: e});
+
     }
 
-    listenerDocs = _.shuffle(listenerDocs);
-    const presentedListeners = [];
-    listenerDocs.forEach((selectedListener) => {
-      presentedListeners.push(selectedListener._id);
-    });
-
-    const pairing = new PairingSchema({
-      $push: {
-        presentedListeners: { $each: presentedListeners },
-        seekerNumber: seekerNumber,
-        seekerNick: seekerNick,
-      },
-    });
-
-    pairing
-      .save()
-      .then((savedDoc) => {
-        res.status(200).json({
-          presentedListeners: presentedListeners,
-          sessionDoc: savedDoc,
-        });
-      })
-      .catch((e) => {
-        console.error(e);
-        res.sendStatus(500);
-      });
-  });
 });
 
 
@@ -122,191 +108,130 @@ router.post("/pairup/category", async (req, res) => {
 });
 */
 
-router.put("/accept/:sessionid", ListenerAuth, (req, res) => {
-  const listenerId = req.listener.id;
-  const sessionId = req.params.sessionid;
-  const listenerNick = faker.internet.userName();
+router.put("/accept/:sessionId", ListenerAuth, async (req, res) => {
+    const listenerId = req.listener.id;
+    const sessionId = req.params.sessionId;
 
-  PairingSchema.findOne({ _id: sessionId }).then((sessionDoc) => {
-    jwt.sign(
-      { id: listenerId },
-      process.env.JWT_SECRET,
-      (err, listenerToken) => {
-        if (err) throw err;
-        jwt.sign(
-          { number: sessionDoc.seekerNumber },
-          process.env.JWT_SECRET,
-          (err, seekerToken) => {
-            if (err) throw err;
+    try {
+        const sessionDoc = await PairingSchema.findOne({_id: sessionId});
 
-            PairingSchema.findOneAndUpdate(
-              { _id: sessionDoc._id },
-              {
-                acceptedByListener: true,
-                $set: { listenerId: listenerId, listenerNick: listenerNick },
-              },
-              { new: true }
-            ).then((sessionDoc) =>
-              res.status(200).json({
-                tokens: { listener: listenerToken, seeker: seekerToken },
-                nicks: {
-                  seeker: sessionDoc.seekerNick,
-                  listener: listenerNick,
-                },
-                listenerId: listenerId,
-                sessionDoc,
-              })
-            );
-          }
-        );
-      }
-    );
-  });
-});
-
-router.put("/disconnect/:sessionId", ListenerAuth, (req, res) => {
-  const listenerId = req.listener.id;
-  const sessionId = req.params.sessionId;
-
-  ListenerSchema.findOne({ _id: listenerId })
-    .then((listenerDoc) => {
-      ListenerSchema.findOneAndUpdate(
-        { _id: listenerId },
-        {
-          "status.currentEngagedSessionId": "None",
-          $addToSet: { sessionIds: listenerDoc.status.currentEngagedSessionId },
+        if (sessionDoc.acceptedByListener && !sessionSchema.endHour) {
+            res.sendStatus(403);
+            return false;
         }
-      )
-        .then(() => {
-          PairingSchema.findOneAndUpdate(
-            { _id: sessionId },
-            { seekerNumber: null }
-          )
-            .then(() => res.status(200).json({ disconnected: true }))
-            .catch((e) => {
-              console.error(e);
-              res.sendStatus(500);
-            });
-        })
-        .catch((e) => {
-          console.error(e);
-          res.sendStatus(500);
+
+        await PairingSchema.findOneAndUpdate({_id: sessionId}, {
+            acceptedByListener: true,
+            startHour: new Date().toISOString().substr(11, 8),
+            listenerId: listenerId
         });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
-});
 
-router.put("/report/by/seeker/:sessionId", SeekerAuth, (req, res) => {
-  const listenerId = req.body.listenerId;
-  const seekerNumber = req.seeker.number;
-  const sessionId = req.params.sessionId;
-  const message = req.body.message;
+        await WaitingPool.findOneAndUpdate({sessionId: sessionId}, {listenerId: listenerId});
 
-  PairingSchema.findOneAndUpdate(
-    { _id: sessionId },
-    {
-      "report.reportedBy": seekerNumber,
-      "report.reportedEntity": listenerId,
-      "report.reportedMessage": message,
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e);
+        res.status(500).json({error: e});
     }
-  )
-    .then(() => {
-      ListenerSchema.findOneAndUpdate(
-        { _id: listenerId },
-        {
-          $push: {
-            reportedBySeekers: {
-              sessionId: sessionId,
-              reporterNumber: seekerNumber,
-              reportedMessage: message,
-              reportDate: new Date(),
-            },
-          },
-        }
-      )
-        .then(() => res.status(200).json({ reported: true }))
-        .catch((e) => {
-          console.error(e);
-          res.sendStatus(500);
-        });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
+
 });
+
+router.put("/disconnect/:sessionId", async (req, res) => {
+    const sessionId = req.params.sessionId;
+
+    try {
+        await PairingSchema.findOneAndUpdate({_id: sessionId}, {endHour: new Date().toISOString().substr(11, 8)});
+        await WaitingPool.findOneAndUpdate({sessionId: sessionId}, {ended: true});
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e);
+        res.status(500).json({error: e});
+    }
+
+
+});
+
+router.get("/poll/:sessionId", async (req, res) => {
+    const sessionId = req.params.sessionId;
+
+    try {
+        const sessionDoc = await PairingSchema.findOne({_id: sessionId});
+        res.status(200).json({acceptedByListener: sessionDoc.acceptedByListener});
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
+})
 
 router.put("/report/by/listener/:sessionId", ListenerAuth, (req, res) => {
-  const listenerId = req.listener.id;
-  const seekerNumber = helpers.popNumber(req.body.seekerNumber);
-  const sessionId = req.params.sessionId;
-  const message = req.body.message;
+    const listenerId = req.listener.id;
+    const seekerNumber = helpers.popNumber(req.body.seekerNumber);
+    const sessionId = req.params.sessionId;
+    const message = req.body.message;
 
-  PairingSchema.findOneAndUpdate(
-    { _id: sessionId },
-    {
-      "report.reportedBy": listenerId,
-      "report.reportedEntity": seekerNumber,
-      "report.reportedMessage": message,
-    }
-  )
-    .then(() => {
-      ListenerSchema.findOneAndUpdate(
-        { _id: listenerId },
+    PairingSchema.findOneAndUpdate(
+        {_id: sessionId},
         {
-          $push: {
-            infractionsReported: {
-              sessionId: sessionId,
-              reporterNumber: seekerNumber,
-              reportedMessage: message,
-              reportDate: new Date(),
-            },
-          },
+            "report.reportedBy": listenerId,
+            "report.reportedEntity": seekerNumber,
+            "report.reportedMessage": message,
         }
-      )
-        .then(() => res.status(200).json({ reported: true }))
+    )
+        .then(() => {
+            ListenerSchema.findOneAndUpdate(
+                {_id: listenerId},
+                {
+                    $push: {
+                        infractionsReported: {
+                            sessionId: sessionId,
+                            reporterNumber: seekerNumber,
+                            reportedMessage: message,
+                            reportDate: new Date(),
+                        },
+                    },
+                }
+            )
+                .then(() => res.status(200).json({reported: true}))
+                .catch((e) => {
+                    console.error(e);
+                    res.sendStatus(500);
+                });
+        })
         .catch((e) => {
-          console.error(e);
-          res.sendStatus(500);
+            console.error(e);
+            res.sendStatus(500);
         });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
 });
 
 router.get("/get/all", (req, res) => {
-  PairingSchema.find({})
-    .then((sessionDocs) => {
-      if (sessionDocs.length < 1) {
-        res.status(404).json({ noSessionFound: true });
-        return false;
-      }
-      res.status(200).json({ sessionDocs });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
+    PairingSchema.find({})
+        .then((sessionDocs) => {
+            if (sessionDocs.length < 1) {
+                res.status(404).json({noSessionFound: true});
+                return false;
+            }
+            res.status(200).json({sessionDocs});
+        })
+        .catch((e) => {
+            console.error(e);
+            res.sendStatus(500);
+        });
 });
 
 router.get("/get/single/:sessionid", (req, res) => {
-  PairingSchema.findOne({ _id: req.params.sessionid })
-    .then((sessionDoc) => {
-      if (!sessionDoc) {
-        res.status(404).json({ noSessionFound: true });
-        return false;
-      }
-      res.status(200).json({ sessionDoc });
-    })
-    .catch((e) => {
-      console.error(e);
-      res.sendStatus(500);
-    });
+    PairingSchema.findOne({_id: req.params.sessionid})
+        .then((sessionDoc) => {
+            if (!sessionDoc) {
+                res.status(404).json({noSessionFound: true});
+                return false;
+            }
+            res.status(200).json({sessionDoc});
+        })
+        .catch((e) => {
+            console.error(e);
+            res.sendStatus(500);
+        });
 });
+
 
 module.exports = router;
