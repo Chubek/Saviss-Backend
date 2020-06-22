@@ -26,8 +26,6 @@ app.use("/admin", require("./routes/admin"));
 app.use("/blocked", require("./routes/blockedNumbers"));
 app.use("/superAdmin", require("./routes/superAdmin"));
 app.use("/session", require("./routes/pairings"));
-app.use("/chat", require("./Chat/route"))
-app.use("/notification", require("./Chat/notification"));
 app.use("/pool", require("./routes/waitingPool"));
 
 const db = mongoose

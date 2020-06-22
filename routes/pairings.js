@@ -115,7 +115,7 @@ router.put("/accept/:sessionId", ListenerAuth, async (req, res) => {
     try {
         const sessionDoc = await PairingSchema.findOne({_id: sessionId});
 
-        if (sessionDoc.acceptedByListener && !sessionSchema.endHour) {
+        if (sessionDoc.acceptedByListener && !sessionDoc.endHour) {
             res.sendStatus(403);
             return false;
         }
@@ -233,5 +233,17 @@ router.get("/get/single/:sessionid", (req, res) => {
         });
 });
 
+router.put("/expire/:sessionId", async (req, res) => {
+    const sessionId = req.params.sessionId;
+
+    try {
+        await PairingSchema.findOneAndUpdate({_id: sessionId}, {expired: true});
+
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
+})
 
 module.exports = router;
