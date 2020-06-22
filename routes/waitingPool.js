@@ -13,3 +13,4 @@ router.get("/get", ListenerAuth, async (req, res) => {
     res.status(200).json({pool});
 })
 
+module.exports = router;
