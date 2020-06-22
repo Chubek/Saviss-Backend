@@ -41,7 +41,7 @@ mongoose.set("useFindAndModify", false);
 const port = process.env.PORT;
 
 app.listen(port, () =>
-    console.error(`Server started on port ${server.address().port}`.blue.inverse)
+    console.log(`Server started on port ${port}`.blue.inverse)
 );
 
 module.exports = app;
