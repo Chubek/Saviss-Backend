@@ -30,3 +30,5 @@ router.post("/expired/:sessionId", (req, res) => {
 
     })
 })
+
+module.exports = router;
