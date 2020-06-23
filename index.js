@@ -6,6 +6,7 @@ const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const colors = require("colors");
 const app = express();
+const bodyParser = require("body-parser")
 
 global.appRoot = path.resolve(__dirname);
 global.envPath = path.join(appRoot, ".env");
@@ -19,7 +20,7 @@ app.use(
         createParentPath: true,
     })
 );
-
+app.use(bodyParser.json());
 
 app.use("/listener", require("./routes/listener"));
 app.use("/admin", require("./routes/admin"));
@@ -27,6 +28,8 @@ app.use("/blocked", require("./routes/blockedNumbers"));
 app.use("/superAdmin", require("./routes/superAdmin"));
 app.use("/session", require("./routes/pairings"));
 app.use("/pool", require("./routes/waitingPool"));
+app.use("/chat", require("./Chat/route"));
+app.use("poolop", require("./Chat/acceptanceSub"));
 
 const db = mongoose
     .connect(process.env.MONGODB_URI, {

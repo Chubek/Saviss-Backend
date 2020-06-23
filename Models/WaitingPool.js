@@ -8,6 +8,7 @@ const WaitingPoolSchema = new Schema({
         type: String,
         default: ''
     },
+    requestedAt: String,
     ended: {
         type: Boolean,
         default: false

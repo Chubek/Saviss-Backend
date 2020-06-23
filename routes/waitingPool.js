@@ -13,4 +13,15 @@ router.get("/get", ListenerAuth, async (req, res) => {
     res.status(200).json({pool});
 })
 
+router.get("/single/:sessionId", ListenerAuth, async (req, res) => {
+    const poolSingle = await WaitingPool.find({sessionId: req.params.sessionId});
+
+    if (!poolSingle) {
+        res.sendStatus(404);
+        return false;
+    }
+
+    res.status(200).json({poolSingle});
+})
+
 module.exports = router;
