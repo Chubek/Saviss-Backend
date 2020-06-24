@@ -26,11 +26,14 @@ router.post("/accepted/:sessionId", (req, res) => {
 })
 
 router.post("/expired/:sessionId", (req, res) => {
-    if (e) throw e;
+
     const sessionId = req.params.sessionId;
 
     channel.publish("expired", JSON.stringify({sessionId: sessionId}), (e) => {
-
+        if (e) throw e;
+        channel.publish("accepted", JSON.stringify({sessionId: sessionId}), (e) => {
+            console.log(`${sessionId} was expired.`)
+        })
     })
 
     res.sendStatus(200);
