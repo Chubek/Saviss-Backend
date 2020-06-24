@@ -13,6 +13,8 @@ router.post("/accept", [ListenerAuth, ChannelAuth], (req, res) => {
         console.log(`${req.channelName} was accepted by ${listenerId}`);
     })
 
+    res.sendStatus(200);
+
 })
 
 router.post("/leave", ChannelAuth, (req, res) => {
@@ -22,6 +24,8 @@ router.post("/leave", ChannelAuth, (req, res) => {
         if (e) throw e;
         console.log("Seeker or Listener of the chat " + req.channelName + " left the session.")
     })
+    res.sendStatus(200);
+
 })
 
 

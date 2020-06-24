@@ -10,6 +10,8 @@ router.post("/entered/:sessionId", (req, res) => {
         if (e) throw e;
         console.log(`${sessionId} joined the waiting pool.`)
     })
+
+    res.sendStatus(200);
 })
 
 router.post("/accepted/:sessionId", (req, res) => {
@@ -20,6 +22,7 @@ router.post("/accepted/:sessionId", (req, res) => {
         console.log(`${sessionId} was accepted.`)
     })
 
+    res.sendStatus(200);
 })
 
 router.post("/expired/:sessionId", (req, res) => {
@@ -29,6 +32,8 @@ router.post("/expired/:sessionId", (req, res) => {
     channel.publish("expired", JSON.stringify({sessionId: sessionId}), (e) => {
 
     })
+
+    res.sendStatus(200);
 })
 
 module.exports = router;
