@@ -37,7 +37,9 @@ router.post("/createSession", async (req, res) => {
 
         const waitingPool = new WaitingPool({
             sessionId: savedDoc._id,
-            requestedAt: new Date().toISOString().substr(11, 5)
+            requestedAt: new Date().toISOString().substr(11, 5),
+            seekerReason: seekerReason,
+
         })
 
         await waitingPool.save();
