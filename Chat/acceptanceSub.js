@@ -15,10 +15,11 @@ router.post("/entered/:sessionId", (req, res) => {
 })
 
 router.post("/accepted/:sessionId", (req, res) => {
-    if (e) throw e;
+
     const sessionId = req.params.sessionId;
 
     channel.publish("accepted", JSON.stringify({sessionId: sessionId}), (e) => {
+        if (e) throw e;
         console.log(`${sessionId} was accepted.`)
     })
 
