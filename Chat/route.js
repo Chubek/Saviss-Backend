@@ -3,6 +3,7 @@ const ablyRealtime = new ably(process.env.ABLY_API)
 const router = require("express").Router();
 const ChannelAuth = require("../Middleware/ChannelAuth");
 const ListenerAuth = require("../Middleware/ListenerAuth")
+const uuid = require("node-uuid");
 
 router.post("/accept", [ListenerAuth, ChannelAuth], (req, res) => {
     const channel = req.channel;
@@ -34,12 +35,17 @@ router.post('/sendMessage', ChannelAuth, (req, res) => {
     const channelName = req.channelName;
 
     const data = {
-        user: req.body.name,
-        msg: req.body.msg,
+        _id: uuid(),
+        user: {
+            _id: req.body.name.toLowerCase() === "listener" ? 1 : 2,
+            name: req.body.name,
+        },
+        text: req.body.msg,
+        createdAt: new Date()
     }
     channel.publish('message', JSON.stringify(data), (err) => {
         if (err) throw err;
-        console.log('publish succeeded ' + data.msg + " on channel " + channelName);
+        console.log('publish succeeded ' + data.text + " on channel by " + req.user.name + " " + channelName);
 
     })
     res.send({status: 'okay', data: data});
