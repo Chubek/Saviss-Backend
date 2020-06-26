@@ -34,18 +34,9 @@ router.post('/sendMessage', ChannelAuth, (req, res) => {
     const channel = req.channel;
     const channelName = req.channelName;
 
-    const data = {
-        _id: uuid(),
-        user: {
-            _id: req.body.name.toLowerCase() === "listener" ? 1 : 2,
-            name: req.body.name,
-        },
-        text: req.body.msg,
-        createdAt: new Date()
-    }
-    channel.publish('message', JSON.stringify(data), (err) => {
+    channel.publish('message', req.body.data, (err) => {
         if (err) throw err;
-        console.log('publish succeeded ' + data.text + " on channel by " + req.user.name + " " + channelName);
+        console.log('publish succeeded ' + JSON.parse(req.body.data).text + " on channel " + channelName);
 
     })
     res.send({status: 'okay', data: data});
