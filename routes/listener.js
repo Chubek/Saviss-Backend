@@ -170,6 +170,8 @@ router.post("/auth", (req, res) => {
                         }
                     }
                 );
+            } else {
+                res.sendStatus(403);
             }
         })
         .catch((e) => {
