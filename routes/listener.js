@@ -183,29 +183,38 @@ router.post("/auth", (req, res) => {
 router.put("/request/otp", (req, res) => {
     let {number} = req.body;
     number = helpers.popNumber(number);
-    const isTest = req.body.isTest === "true" ? true : false;
+    const isTest = req.body.isTest === "true";
 
     let otp = _.random(100, 999) + _.random(1000, 9999);
     if (isTest) {
         otp = "9999";
     }
-    ListenerSchema.findOneAndUpdate(
-        {cell: number},
-        {
-            "otp.password": otp,
-            "otp.creationHour": new Date()
-                .toISOString()
-                .substr(11, 5)
-                .replace(":", ""),
-        }
-    )
-        .then(() => {
-            res.status(200).json({otpUpdated: true, otpSent: true});
+
+    ListenerSchema.findOne({cell: number})
+        .then((listenerDoc) => {
+            if (!listenerDoc) {
+                res.status(404).json({isUser: false});
+                return false;
+            }
+
+            ListenerSchema.findOneAndUpdate(
+                {cell: number},
+                {
+                    "otp.password": otp,
+                    "otp.creationHour": new Date()
+                        .toISOString()
+                        .substr(11, 5)
+                        .replace(":", ""),
+                }
+            )
+                .then(() => {
+                    res.status(200).json({otpUpdated: true, otpSent: true});
+                })
+                .catch((e) => {
+                    console.error(e);
+                    res.sendStatus(500);
+                });
         })
-        .catch((e) => {
-            console.error(e);
-            res.sendStatus(500);
-        });
 });
 
 router.put("/verify/email", ListenerAuth, (req, res) => {
