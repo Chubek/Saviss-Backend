@@ -6,7 +6,7 @@ const pushStar = require("../Services/PushStar");
 
 
 router.post("/startSession", async (req, res) => {
-    const seekerToken = req.body.Number;
+    const seekerNumber = req.body.Number;
     const seekerReason = req.body.reason;
 
     const session = new Session({
@@ -21,7 +21,7 @@ router.post("/startSession", async (req, res) => {
         {$set: {seekerReason: seekerReason, requestedAt: moment()}},
         {upsert: true});
 
-    res.sendStatus(200);
+    res.status(200).json({sessionId: savedDoc._id});
 
 
 })
@@ -54,5 +54,14 @@ router.put("/endSession", async (req, res) => {
 
     res.sendStatus(200);
 })
+
+
+router.put("/disconnect/:sessionId", async (req, res) => {
+    await Session.findOneAndUpdate({_id: req.params.sessionId}, {$set: {endedAt: moment()}});
+    await WaitingPool.findOneAndUpdate({sessionId: sessionId}, {$set: {ended: moment()}});
+
+    res.sendStatus(200);
+})
+
 
 module.exports = router;

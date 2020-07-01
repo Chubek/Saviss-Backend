@@ -5,9 +5,9 @@ const ChannelAuth = require("../Middleware/ChannelAuth");
 const ListenerAuth = require("../Middleware/ListenerAuth")
 const uuid = require("node-uuid");
 
-router.post("/accept", [ListenerAuth, ChannelAuth], (req, res) => {
+router.post("/accept", ChannelAuth, (req, res) => {
     const channel = req.channel;
-    const listenerId = req.listener.id;
+    const listenerId = req.body.listenerNumber
 
     channel.publish("accepted", JSON.stringify({sessionId: req.channelName}), (e) => {
         if (e) throw e;
