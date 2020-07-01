@@ -17,6 +17,11 @@ router.post("/auth", async (req, res) => {
         return false;
     }
 
+    if (user.banned) {
+        res.sendStatus(407);
+        return false;
+    }
+
     const expiryHour = moment(user.otpCreationHour).add(2, 'hours') <= moment();
 
     if (!expiryHour) {
@@ -65,21 +70,6 @@ router.put("/ban", AdminAuth, async (req, res) => {
 
 })
 
-router.put("/report", async (req, res) => {
-    const number = req.body.number;
-    const reportReason = req.body.reportReason;
-
-    if (!reportReason) {
-        res.sendStatus(403);
-        return false;
-    }
-
-    await User.findOneAndUpdate({number: number},
-        {$set: {$push: {reports: {reportDate: moment(), reportReason: reportReason}}}},
-        {upsert: true});
-
-    res.sendStatus(200);
-})
 
 router.put("/ignore", async (req, res) => {
     const {number, role, sessionId} = req.body;

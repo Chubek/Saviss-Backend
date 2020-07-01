@@ -11,7 +11,11 @@ const SessionSchema = new Schema({
         thumbs: Boolean,
         star: String,
 
-    }
+    },
+    reports: {
+        reporter: String,
+        reportReason: String,
+    },
 })
 
 module.exports = mongoose.model("Session", SessionSchema);

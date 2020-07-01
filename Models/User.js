@@ -11,10 +11,6 @@ const UserSchema = new Schema({
     otp: String,
     otpCreationHour: Date,
     banned: Boolean,
-    reports: [{
-        reportDate: Date,
-        reportReason: String,
-    }],
     ignoredNumbers: [String],
     pushToken: String
 })

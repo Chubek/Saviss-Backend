@@ -56,6 +56,24 @@ router.put("/endSession", async (req, res) => {
 })
 
 
+router.put("/report/:sessionId", async (req, res) => {
+    const sessionId = req.params.sessionId;
+    const reportReason = req.body.reportReason;
+    const reporter = req.body.reporter;
+
+    if (!reportReason) {
+        res.sendStatus(403);
+        return false;
+    }
+
+    await Session.findOneAndUpdate({_id: sessionId},
+        {$set: {report: {reporter: reporter, reportReason: reportReason}}},
+        {upsert: true});
+
+    res.sendStatus(200);
+})
+
+
 router.put("/disconnect/:sessionId", async (req, res) => {
     await Session.findOneAndUpdate({_id: req.params.sessionId}, {$set: {endedAt: moment()}});
     await WaitingPool.findOneAndUpdate({sessionId: sessionId}, {$set: {ended: moment()}});
