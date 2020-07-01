@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 const WaitingPoolSchema = new Schema({
     sessionId: String,
     seekerReason: String,
+    seekerNumber: String,
     listenerId: {
         type: String,
         default: ''

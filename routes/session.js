@@ -18,7 +18,7 @@ router.post("/startSession", async (req, res) => {
     const savedDoc = await session.save();
 
     await WaitingPool.findOneAndUpdate({sessionId: savedDoc._id},
-        {$set: {seekerReason: seekerReason, requestedAt: moment()}},
+        {$set: {seekerReason: seekerReason, seekerNumber: seekerNumber, requestedAt: moment()}},
         {upsert: true});
 
     res.status(200).json({sessionId: savedDoc._id});

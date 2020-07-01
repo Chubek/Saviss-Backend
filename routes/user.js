@@ -4,6 +4,7 @@ const moment = require("moment");
 const _ = require("lodash");
 const SendOTP = require("../Services/SendOTP");
 const AdminAuth = require("../Middleware/AdminAuth");
+const Session = require("../Models/Session")
 
 router.post("/auth", async (req, res) => {
     const number = req.body.number;
@@ -40,6 +41,8 @@ router.put("/requestOtp", async (req, res) => {
     if (isTest) otp = "9999";
 
     otp = _.random(9) + _.random(9) + _.random(9) + _.random(9);
+
+    await SendOTP(otp, number);
 
     await User.findOneAndUpdate({number: number}, {
         $set: {
@@ -79,11 +82,22 @@ router.put("/report", async (req, res) => {
 })
 
 router.put("/ignore", async (req, res) => {
-    const {number, ignoredNumber} = req.body;
+    const {number, role, sessionId} = req.body;
 
-    await User.findOneAndUpdate({number: number}, {$set: {$push: {$ignoredNumber: {ignoredNumber}}}});
+    const session = await Session.findOne({_id: sessionId});
+
+    const ignoredNumber = role === "Listener" ? session.seekerNumber : session.listenerNumber;
+
+    await User.findOneAndUpdate({number: number}, {$set: {$push: {$ignoredNumbers: {ignoredNumber}}}});
 
     res.sendStatus(200);
+})
+
+router.get("/getIgnored/:number", async (req, res) => {
+    const user = await User.findOne({number: req.params.number});
+
+    res.status(200).json({ignoredNumbers: user.ignoredNumbers});
+
 })
 
 module.exports = router;
