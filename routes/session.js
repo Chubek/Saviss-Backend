@@ -48,7 +48,7 @@ router.put("/endSession", async (req, res) => {
             feedback: {thumbs: thumbs, star: star}
         }
     });
-    await WaitingPool.findOneAndUpdate({sessionId: sessionId}, {$set: {ended: moment()}});
+    await WaitingPool.findOneAndUpdate({sessionId: sessionId}, {$set: {ended: true}});
 
     pushStar(sessionId, star);
 
