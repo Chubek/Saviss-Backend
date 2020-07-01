@@ -8,7 +8,7 @@ module.exports = async (sessionId, star) => {
     const userSeeker = await User.findOne({number: session.seekerNumber});
 
 
-    const pushTokens = [userListener.pushToken, userSeeker.pushToken];
+    const pushTokens = [userListener.pushToken];
 
     const expo = new Expo();
 
