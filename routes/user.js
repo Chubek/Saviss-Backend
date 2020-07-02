@@ -31,9 +31,6 @@ router.post("/auth", async (req, res) => {
 
 
     if (user.otp !== otp) {
-        console.log(user.otp);
-        console.log(otp);
-        console.log("test", user.otp === otp);
         res.sendStatus(403);
         return false;
     }
