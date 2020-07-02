@@ -22,13 +22,20 @@ router.post("/auth", async (req, res) => {
         return false;
     }
 
-    const expiryHour = moment(user.otpCreationHour).add(2, 'hours') <= moment();
+    const expiryHour = moment(user.otpCreationHour).diff(moment(), 'minutes') <= 30;
+
+    if (!expiryHour) {
+        res.sendStatus(401);
+        return false;
+    }
 
 
     if (user.otp !== otp) {
         res.sendStatus(403);
         return false;
     }
+
+    res.sendStatus(200);
 
 })
 
