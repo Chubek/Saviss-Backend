@@ -39,11 +39,12 @@ router.put("/requestOtp", async (req, res) => {
 
     let otp;
 
-    if (isTest) otp = "9999";
-
-    otp = _.random(9) + _.random(9) + _.random(9) + _.random(9);
-
-    await SendOTP(otp, number);
+    if (isTest) {
+        otp = "9999"
+    } else {
+        otp = _.random(9) + _.random(9) + _.random(9) + _.random(9);
+        await SendOTP(otp, number);
+    }
 
     await User.findOneAndUpdate({number: number}, {
         $set: {
