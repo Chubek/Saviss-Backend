@@ -10,7 +10,7 @@ router.post("/auth", async (req, res) => {
     const number = req.body.number;
     const otp = req.body.otp;
 
-    const user = await User.find({number: number});
+    const user = await User.findOne({number: number});
 
     if (!user) {
         res.sendStatus(404);
