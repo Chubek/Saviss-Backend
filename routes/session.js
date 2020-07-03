@@ -3,10 +3,10 @@ const router = require('express').Router();
 const moment = require("moment");
 const WaitingPool = require("../Models/WaitingPool");
 const pushStar = require("../Services/PushStar");
+import UserAuth from "../Middleware/UserAuth";
 
-
-router.post("/startSession", async (req, res) => {
-    const seekerNumber = req.body.Number;
+router.post("/startSession", UserAuth, async (req, res) => {
+    const seekerNumber = req.number;
     const seekerReason = req.body.reason;
 
     const session = new Session({
@@ -26,8 +26,8 @@ router.post("/startSession", async (req, res) => {
 
 })
 
-router.put("/acceptSession", async (req, res) => {
-    const sessionId = req.body.sessionId;
+router.put("/acceptSession", UserAuth, async (req, res) => {
+    const sessionId = req.number;
     const listenerNumber = req.body.listenerNumber;
 
     await Session.findOneAndUpdate({_id: sessionId}, {$set: {listenerNumber: listenerNumber}})

@@ -5,6 +5,7 @@ const _ = require("lodash");
 const SendOTP = require("../Services/SendOTP");
 const AdminAuth = require("../Middleware/AdminAuth");
 const Session = require("../Models/Session")
+const jwt = require("jsonwebtoken");
 
 router.post("/auth", async (req, res) => {
     const number = req.body.number;
@@ -35,7 +36,7 @@ router.post("/auth", async (req, res) => {
         return false;
     }
 
-    res.sendStatus(200);
+    res.status(200).json({token: jwt.sign(number, process.env.JWT_SECRET)});
 
 })
 

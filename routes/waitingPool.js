@@ -1,8 +1,8 @@
 const WaitingPool = require("../Models/WaitingPool");
 const router = require("express").Router();
-const ListenerAuth = require("../Middleware/ListenerAuth")
+const UserAuth = require("../Middleware/UserAuth");
 
-router.get("/get", ListenerAuth, async (req, res) => {
+router.get("/get", UserAuth, async (req, res) => {
     const pool = await WaitingPool.find({listenerId: '', ended: false});
 
     if (pool.length < 1) {
@@ -13,7 +13,7 @@ router.get("/get", ListenerAuth, async (req, res) => {
     res.status(200).json({pool});
 })
 
-router.get("/single/:sessionId", ListenerAuth, async (req, res) => {
+router.get("/single/:sessionId", UserAuth, async (req, res) => {
     const poolSingle = await WaitingPool.find({sessionId: req.params.sessionId});
 
     if (!poolSingle) {
