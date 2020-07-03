@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-export default function UserAuth(req, res, next) {
+module.exports = function UserAuth(req, res, next) {
     const token = req.header("x-auth-number-token");
 
     if (!token)
