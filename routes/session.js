@@ -3,7 +3,7 @@ const router = require('express').Router();
 const moment = require("moment");
 const WaitingPool = require("../Models/WaitingPool");
 const pushStar = require("../Services/PushStar");
-import UserAuth from "../Middleware/UserAuth";
+const UserAuth = require("../Middleware/UserAuth");
 
 router.post("/startSession", UserAuth, async (req, res) => {
     const seekerNumber = req.number;
