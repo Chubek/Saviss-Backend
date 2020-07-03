@@ -4,7 +4,8 @@ module.exports = function UserAuth(req, res, next) {
     const token = req.header("x-auth-number-token");
 
     if (!token) {
-        console.log("No token, access denied. Token is: " + token)
+        console.log("No token, access denied. Token is: " + token);
+        console.log(JSON.stringify(req.headers));
         return res.status(401).json({message: "No token, access denied."});
     }
 
