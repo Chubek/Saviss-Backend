@@ -6,6 +6,7 @@ const SendOTP = require("../Services/SendOTP");
 const AdminAuth = require("../Middleware/AdminAuth");
 const Session = require("../Models/Session")
 const jwt = require("jsonwebtoken");
+const UserAuth = require("../Middleware/UserAuth")
 
 router.post("/auth", async (req, res) => {
     const number = req.body.number;
@@ -88,8 +89,8 @@ router.put("/ignore", async (req, res) => {
     res.sendStatus(200);
 })
 
-router.get("/getIgnored/:number", async (req, res) => {
-    const user = await User.findOne({number: req.params.number});
+router.get("/getIgnored", UserAuth, async (req, res) => {
+    const user = await User.findOne({number: req.number});
 
     res.status(200).json({ignoredNumbers: user.ignoredNumbers});
 
