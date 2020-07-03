@@ -76,7 +76,7 @@ router.put("/report/:sessionId", async (req, res) => {
 
 router.put("/disconnect/:sessionId", async (req, res) => {
     await Session.findOneAndUpdate({_id: req.params.sessionId}, {$set: {endedAt: moment()}});
-    await WaitingPool.findOneAndUpdate({sessionId: sessionId}, {$set: {ended: moment()}});
+    await WaitingPool.findOneAndUpdate({sessionId: req.params.sessionId}, {$set: {ended: moment()}});
 
     res.sendStatus(200);
 })
