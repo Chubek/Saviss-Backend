@@ -2,12 +2,12 @@ const ably = require('ably').Realtime;
 const ablyRealtime = new ably(process.env.ABLY_API)
 const router = require("express").Router();
 const ChannelAuth = require("../Middleware/ChannelAuth");
-const ListenerAuth = require("../Middleware/ListenerAuth")
+const UserAuth = require("../Middleware/UserAuth");
 const uuid = require("node-uuid");
 
-router.post("/accept", ChannelAuth, (req, res) => {
+router.post("/accept", [ChannelAuth, UserAuth], (req, res) => {
     const channel = req.channel;
-    const listenerId = req.body.listenerNumber
+    const listenerId = req.number;
 
     channel.publish("accepted", JSON.stringify({sessionId: req.channelName}), (e) => {
         if (e) throw e;
