@@ -47,7 +47,7 @@
     "mongoose-jumblator": "^1.2.4",
     "node-redis-pubsub": "^4.0.0",
     "node-uuid": "^1.4.8",
-    "nodemailer": "^6.4.6",
+    "nodemailer": "^6.4.16",
     "randomstring": "^1.1.5",
     "redis": "^3.0.2",
     "sha256-file": "^1.0.0",
