@@ -55,7 +55,7 @@
     "stream-chat": "^1.8.0",
     "utf-8-validate": "^5.0.2",
     "websocket": "^1.0.31",
-    "ws": "^7.3.0"
+    "ws": "^7.4.6"
   },
   "devDependencies": {
     "mochawesome": "^6.1.1",
