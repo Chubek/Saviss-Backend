@@ -42,7 +42,7 @@
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.15",
     "mocha": "^7.1.2",
-    "moment": "^2.27.0",
+    "moment": "^2.29.4",
     "mongoose": "^5.9.9",
     "mongoose-jumblator": "^1.2.4",
     "node-redis-pubsub": "^4.0.0",
